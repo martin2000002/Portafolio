@@ -1,12 +1,17 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { Navbar } from "./shared/components/navbar/navbar";
+import { StarfieldComponent } from './shared/components/starfield/starfield';
+import { FaviconService } from './shared/services/favicon.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, Navbar, StarfieldComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App {
   protected readonly title = signal('portafolio');
+  // Instantiate FaviconService to keep favicon in sync with theme
+  private readonly _favicon = inject(FaviconService);
 }

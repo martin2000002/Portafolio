@@ -1,17 +1,33 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# BUILD OUTPUT
+dist/
+tmp/
+out-tsc/
+bazel-out/
 
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+# DEPENDENCIAS DE NODE
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
 
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
+# ANGULAR & TAILWIND CACHES
+.angular/
+.angular/cache/
+.sass-cache/
 
-# IDEs and editors
+# ENTORNOS Y CONFIGURACIONES LOCALES
+.firebase/
+firebase-debug.log
+.firebaserc
+firebase.json
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# IDEs / EDITORES
 .idea/
 .project
 .classpath
@@ -19,25 +35,36 @@ yarn-error.log
 *.launch
 .settings/
 *.sublime-workspace
+.history/
+__screenshots__/
 
-# Visual Studio Code
+# VSCode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-.history/*
 
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
+# TESTING / COVERAGE
+coverage/
+libpeerconnection.log
+connect.lock
 testem.log
-/typings
-__screenshots__/
+typings/
+karma-*
+jest-*
 
-# System files
+# SISTEMA OPERATIVO
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# LOGS & TEMPORAL
+*.log
+*.tmp
+*.swp
+
+# COMPILADOS / DEPLOY
+dist/portafolio/
+public/

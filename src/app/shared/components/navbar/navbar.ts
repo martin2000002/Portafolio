@@ -1,0 +1,146 @@
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, ViewChild, ElementRef, AfterViewInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
+import { LucideAngularModule, SunIcon, MoonIcon, MenuIcon, UserIcon, SparklesIcon, FolderGit2Icon, MailIcon } from 'lucide-angular';
+import { gsap } from 'gsap';
+import { ThemeService } from '../../services/theme.service';
+
+@Component({
+  selector: 'app-navbar',
+  imports: [LucideAngularModule],
+  templateUrl: './navbar.html',
+  styleUrl: './navbar.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'block sticky top-0 z-50'
+  }
+})
+export class Navbar implements AfterViewInit, OnDestroy {
+  readonly MenuIcon = MenuIcon;
+  readonly SunIcon = SunIcon;
+  readonly MoonIcon = MoonIcon;
+  private readonly theme = inject(ThemeService);
+
+  readonly isDark = computed(() => this.theme.mode() === 'dark');
+
+  @ViewChild('themeBtn', { static: true }) private themeBtn!: ElementRef<HTMLElement>;
+  @ViewChild('menuBtn', { static: true }) private menuBtn!: ElementRef<HTMLElement>;
+  @ViewChild('overlay') private overlay?: ElementRef<HTMLElement>;
+  @ViewChild('panel') private panel?: ElementRef<HTMLElement>;
+  @ViewChildren('menuItem') private menuItemEls?: QueryList<ElementRef<HTMLElement>>;
+
+  private cleanupFns: Array<() => void> = [];
+  readonly menuOpen = signal(false);
+
+  readonly menuItems = [
+    { label: 'About', icon: UserIcon },
+    { label: 'Skills', icon: SparklesIcon },
+    { label: 'Projects', icon: FolderGit2Icon },
+    { label: 'Contact', icon: MailIcon },
+  ] as const;
+
+  toggleTheme(): void {
+    this.theme.toggle();
+  }
+
+  ngAfterViewInit(): void {
+    [this.themeBtn?.nativeElement, this.menuBtn?.nativeElement]
+      .filter((el): el is HTMLElement => !!el)
+      .forEach((el) => this.attachIconInteractions(el));
+  }
+
+  private readonly outsideCloseEffect = effect((onCleanup) => {
+    if (!this.menuOpen()) return;
+
+    const onPointerDown = (ev: Event) => {
+      const panelEl = this.panel?.nativeElement;
+      const btnEl = this.menuBtn?.nativeElement;
+      const target = ev.target as Node | null;
+      if (!panelEl) {
+        this.menuOpen.set(false);
+        return;
+      }
+      if ((target && panelEl.contains(target)) || (btnEl && target && btnEl.contains(target))) {
+        return;
+      }
+      this.closeMenu();
+    };
+    const onKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') this.closeMenu();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown, true);
+    onCleanup(() => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown, true);
+    });
+  });
+    
+
+  ngOnDestroy(): void {
+    this.cleanupFns.forEach((fn) => fn());
+    gsap.killTweensOf([this.themeBtn?.nativeElement, this.menuBtn?.nativeElement]);
+  }
+
+  private attachIconInteractions(el: HTMLElement): void {
+    const onEnter = () => gsap.to(el, { scale: 1.08, duration: 0.18, ease: 'power2.out' });
+    const onLeave = () => gsap.to(el, { scale: 1, duration: 0.2, ease: 'power2.inOut' });
+    const onDown = () => gsap.to(el, { scale: 0.95, duration: 0.08, ease: 'power1.out' });
+    const onUp = () => gsap.to(el, { scale: 1.05, duration: 0.12, ease: 'power1.out' });
+
+    el.addEventListener('mouseenter', onEnter);
+    el.addEventListener('mouseleave', onLeave);
+    el.addEventListener('mousedown', onDown);
+    el.addEventListener('mouseup', onUp);
+    el.addEventListener('touchstart', onDown, { passive: true } as AddEventListenerOptions);
+    el.addEventListener('touchend', onUp);
+
+    this.cleanupFns.push(() => {
+      el.removeEventListener('mouseenter', onEnter);
+      el.removeEventListener('mouseleave', onLeave);
+      el.removeEventListener('mousedown', onDown);
+      el.removeEventListener('mouseup', onUp);
+      el.removeEventListener('touchstart', onDown as EventListener);
+      el.removeEventListener('touchend', onUp as EventListener);
+    });
+  }
+
+  onMenuClick(): void {
+    if (this.menuOpen()) {
+      this.closeMenu();
+    } else {
+      this.openMenu();
+    }
+  }
+
+  openMenu(): void {
+    this.menuOpen.set(true);
+    queueMicrotask(() => this.animateOpen());
+  }
+
+  closeMenu(): void {
+    const panel = this.panel?.nativeElement;
+    const items = this.menuItemEls?.map((r) => r.nativeElement) ?? [];
+    if (!panel) {
+      this.menuOpen.set(false);
+      return;
+    }
+    const tl = gsap.timeline({
+      defaults: { ease: 'power2.inOut' },
+      onComplete: () => this.menuOpen.set(false),
+    });
+    tl.to(items, { y: 10, opacity: 0, duration: 0.15, stagger: { each: 0.03, from: 'end' } }, 0)
+      .to(panel, { y: -8, opacity: 0, duration: 0.22 }, '<');
+  }
+
+  private animateOpen(): void {
+    const panel = this.panel?.nativeElement;
+    const items = this.menuItemEls?.map((r) => r.nativeElement) ?? [];
+    if (!panel) return;
+
+    gsap.set(panel, { opacity: 0, y: -8, transformOrigin: 'top right' });
+    if (items.length) gsap.set(items, { y: 8, opacity: 0 });
+
+    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+    tl.to(panel, { y: 0, opacity: 1, duration: 0.24 })
+      .to(items, { y: 0, opacity: 1, duration: 0.22, stagger: 0.06 }, '-=0.05');
+  }
+}

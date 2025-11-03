@@ -45,3 +45,28 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## GSAP Animations
+
+- Use **GSAP (`gsap`)** for all animation logic.
+- Import locally where needed:  
+  ```typescript
+  import { gsap } from 'gsap';
+- Prefer GSAP over CSS for performance and control.
+- Initialize animations in ngAfterViewInit().
+- Use @ViewChild for element references.
+- For scroll effects, use ScrollTrigger:
+- Clean up timelines or triggers in ngOnDestroy().
+- Use gsap.timeline() to group related animations.
+
+## Tailwind & Theme Usage
+
+- The project uses Tailwind CSS for styling.
+- Use Tailwind utility classes; avoid inline styles.
+- Only use colors defined in src/tailwind.css.
+- Never hardcode color values (hex, rgb, hsl).
+- Follow responsive and dark-mode conventions (sm:, md:, lg:, dark:).
+- Maintain design consistency with theme tokens (spacing, radius, typography, shadows).
+
+## Icons
+- Use the Lucide Icons library for all icons.
