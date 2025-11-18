@@ -209,7 +209,7 @@ export class About implements AfterViewInit, OnDestroy {
     const animation = gsap.to(img, {
       x: viewportCenterX - (img.offsetWidth / 2),
       y: viewportCenterY - (img.offsetHeight / 2),
-      scale: 1.6,
+      scale: 1.5,
       rotation: finalRotation,
       ease: 'none',
       force3D: true,
