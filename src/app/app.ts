@@ -1,8 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Navbar } from "./shared/components/navbar/navbar";
-import { StarfieldComponent } from './shared/components/starfield/starfield';
-import { FaviconService } from './shared/services/favicon.service';
+import { Navbar } from "./presentation/shared/components/navbar/navbar";
+import { StarfieldComponent } from './presentation/shared/components/starfield/starfield';
+import { FaviconService } from './presentation/shared/services/favicon.service';
 
 @Component({
   selector: 'app-root',

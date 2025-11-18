@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostList
 import { LucideAngularModule, MailIcon, BookOpenIcon, GithubIcon, LinkedinIcon } from 'lucide-angular';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { LINKS } from '../shared/constants/links.constant';
+import { LINKS } from '../../shared/constants/links.constant';
 
 @Component({
   selector: 'app-about',
