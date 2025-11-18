@@ -155,12 +155,17 @@ export class About implements AfterViewInit, OnDestroy {
     const img = this.shapeRef?.nativeElement;
     if (!img) return;
 
+    // Matar el ScrollTrigger y limpiar TODAS las propiedades GSAP previas
     if (this.shapeScrollTrigger) {
       this.shapeScrollTrigger.kill();
+      this.shapeScrollTrigger = undefined;
     }
 
+    // Limpiar completamente todas las transformaciones GSAP para empezar desde cero
+    gsap.set(img, { clearProps: 'all' });
+
     const isMobile = window.innerWidth < 640;
-    
+
     let initialRotation: number;
     let finalRotation: number;
     let initialX = 0;
@@ -169,53 +174,56 @@ export class About implements AfterViewInit, OnDestroy {
     if (isMobile) {
       const jelliesMobile = this.jelliesMobileRef?.nativeElement;
       if (!jelliesMobile) return;
-      
+
       const jelliesRect = jelliesMobile.getBoundingClientRect();
       initialX = (window.innerWidth - img.offsetWidth) / 2;
-      initialY = jelliesRect.bottom + 30;
+      // Convertir a posición absoluta sumando el scroll actual
+      initialY = jelliesRect.bottom + window.scrollY + 30;
       initialRotation = 90 + 30;
       finalRotation = 90;
     } else {
       const profileImg = this.profileRef?.nativeElement;
       if (!profileImg) return;
-      
+
       const profileRect = profileImg.getBoundingClientRect();
       initialX = profileRect.right + 50 - img.offsetWidth;
-      initialY = profileRect.bottom + 0;
+      // Convertir a posición absoluta sumando el scroll actual
+      initialY = profileRect.bottom + window.scrollY + 0;
       initialRotation = 0;
       finalRotation = 0;
     }
-    
+
+    // Establecer posición inicial de manera determinística
     gsap.set(img, {
       x: initialX,
       y: initialY,
       scale: 1,
       rotation: initialRotation,
+      force3D: true,
     });
 
     const viewportCenterX = window.innerWidth / 2;
     const viewportCenterY = window.innerHeight / 2;
-    
+
+    // Crear la animación con valores absolutos
     const animation = gsap.to(img, {
       x: viewportCenterX - (img.offsetWidth / 2),
       y: viewportCenterY - (img.offsetHeight / 2),
       scale: 1.6,
       rotation: finalRotation,
       ease: 'none',
+      force3D: true,
       scrollTrigger: {
         trigger: 'section',
         start: 'top top+=100',
         end: '+=1000',
         scrub: true,
         markers: false,
-        onRefresh: (self) => {
-          self.animation?.invalidate();
-        },
+        invalidateOnRefresh: true, // Recalcular valores en cada refresh
       },
     });
 
     this.shapeScrollTrigger = animation.scrollTrigger as ScrollTrigger;
-    
   }
 
   ngOnDestroy(): void {
