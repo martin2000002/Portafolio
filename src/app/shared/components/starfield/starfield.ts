@@ -162,7 +162,7 @@ export class StarfieldComponent implements AfterViewInit, OnDestroy {
 
         // Física espacial: casi sin fricción (como en el vacío del espacio)
         // Solo un damping mínimo para evitar que se aceleren infinitamente
-        const damping = 0.995; // Fricción casi nula (pierde solo 0.5% por frame)
+        const damping = 0.97; // Fricción casi nula (pierde solo 0.5% por frame)
         star.velocityX *= damping;
         star.velocityY *= damping;
 

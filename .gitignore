@@ -64,3 +64,4 @@ Desktop.ini
 # COMPILADOS / DEPLOY
 dist/portafolio/
 public/
+backup/

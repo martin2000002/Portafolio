@@ -34,8 +34,12 @@ export class About implements AfterViewInit, OnDestroy {
   maxTextWidth = 0;
   private timelines = new Map<HTMLElement, gsap.core.Timeline>();
   private shapeScrollTrigger?: ScrollTrigger;
+  private imageChangeScrollTrigger?: ScrollTrigger;
   private ro?: ResizeObserver;
   private updateShapePositionBound = () => this.updateShapePosition();
+  currentImageIndex = 1;
+  readonly totalImages = 25;
+  readonly pixelsPerImage = 50; // Píxeles de scroll por cada cambio de imagen
   
   constructor(private readonly cdr: ChangeDetectorRef) {}
 
@@ -50,6 +54,7 @@ export class About implements AfterViewInit, OnDestroy {
   onResize(): void {
     this.syncWidth();
     this.updateShapePosition();
+    this.setupImageChange();
   }
 
   private syncWidth(): void {
@@ -128,6 +133,7 @@ export class About implements AfterViewInit, OnDestroy {
     this.ensurePositionObservers();
     this.updateShapePosition();
     requestAnimationFrame(() => this.updateShapePosition());
+    this.setupImageChange();
   }
 
   private ensurePositionObservers(): void {
@@ -209,14 +215,14 @@ export class About implements AfterViewInit, OnDestroy {
     const animation = gsap.to(img, {
       x: viewportCenterX - (img.offsetWidth / 2),
       y: viewportCenterY - (img.offsetHeight / 2),
-      scale: 1.5,
+      scale: 1.4,
       rotation: finalRotation,
       ease: 'none',
       force3D: true,
       scrollTrigger: {
         trigger: 'section',
         start: 'top top+=100',
-        end: '+=1000',
+        end: '+=800',
         scrub: true,
         markers: false,
         invalidateOnRefresh: true, // Recalcular valores en cada refresh
@@ -226,9 +232,59 @@ export class About implements AfterViewInit, OnDestroy {
     this.shapeScrollTrigger = animation.scrollTrigger as ScrollTrigger;
   }
 
+  private setupImageChange(): void {
+    const img = this.shapeRef?.nativeElement;
+    if (!img) return;
+
+    // Limpiar ScrollTrigger previo si existe
+    if (this.imageChangeScrollTrigger) {
+      this.imageChangeScrollTrigger.kill();
+      this.imageChangeScrollTrigger = undefined;
+    }
+
+    // Este ScrollTrigger SOLO se activa DESPUÉS de que termine la animación de centrado
+    // La animación de centrado termina en: start (100px) + end (1000px) = 1100px de scroll
+    const totalScrollDistance = this.totalImages * this.pixelsPerImage;
+    const viewportCenterX = window.innerWidth / 2;
+    const viewportCenterY = window.innerHeight / 2;
+
+    this.imageChangeScrollTrigger = ScrollTrigger.create({
+      trigger: 'section',
+      start: 'top top-=900', // Empieza DESPUÉS de que la animación termine (100 + 800)
+      end: `top top-=${900 + totalScrollDistance}`, // Scroll total para todas las imágenes
+      scrub: true,
+      markers: false,
+      onUpdate: (self) => {
+        // Mantener el blob centrado y con el mismo tamaño durante todo el cambio de imágenes
+        gsap.set(img, {
+          x: viewportCenterX - (img.offsetWidth / 2),
+          y: viewportCenterY - (img.offsetHeight / 2),
+          scale: 1.4,
+          rotation: window.innerWidth < 640 ? 90 : 0,
+          force3D: true,
+        });
+
+        // Calcular qué imagen mostrar basado en el progreso
+        // progress va de 0 a 1, lo multiplicamos por el total de imágenes
+        const imageIndex = Math.floor(self.progress * this.totalImages) + 1;
+        const clampedIndex = Math.min(Math.max(imageIndex, 1), this.totalImages);
+
+        if (clampedIndex !== this.currentImageIndex) {
+          this.currentImageIndex = clampedIndex;
+          // Formatear el número con ceros a la izquierda (01, 02, ..., 25)
+          const imageNumber = String(clampedIndex).padStart(2, '0');
+          img.src = `assets/3d_shape/${imageNumber}.webp`;
+        }
+      }
+    });
+  }
+
   ngOnDestroy(): void {
     if (this.shapeScrollTrigger) {
       this.shapeScrollTrigger.kill();
+    }
+    if (this.imageChangeScrollTrigger) {
+      this.imageChangeScrollTrigger.kill();
     }
     if (this.ro) {
       this.ro.disconnect();
