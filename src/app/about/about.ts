@@ -215,6 +215,7 @@ export class About implements AfterViewInit, OnDestroy {
     });
 
     this.shapeScrollTrigger = animation.scrollTrigger as ScrollTrigger;
+    
   }
 
   ngOnDestroy(): void {

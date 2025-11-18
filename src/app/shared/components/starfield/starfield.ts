@@ -55,7 +55,7 @@ export class StarfieldComponent implements AfterViewInit, OnDestroy {
   private generate(): void {
     const w = window.innerWidth;
     const h = this.tileHeight;
-    const count = Math.floor((w * h) / 12000); // Density of stars
+    const count = Math.floor((w * h) * 0.00007); // Density of stars
     const stars: Star[] = [];
     
     // 3 tiles for loop
@@ -102,8 +102,8 @@ export class StarfieldComponent implements AfterViewInit, OnDestroy {
     gsap.set(els, { x: 0, y: 0 });
 
     els.forEach((el) => {
-  const xRange = gsap.utils.random(-28, 28, 0.5, true);
-  const yRange = gsap.utils.random(-20, 20, 0.5, true);
+  const xRange = gsap.utils.random(-100, 100, 0.2, true);
+  const yRange = gsap.utils.random(-100, 100, 0.2, true);
   const dur = gsap.utils.random(3, 6, 0.1, true);
       const del = gsap.utils.random(0, 1.2, 0.05, true);
       gsap.to(el, {
