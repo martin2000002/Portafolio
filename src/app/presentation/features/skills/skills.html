@@ -1,1 +1,25 @@
-<p>skills works!</p>
+<section #sectionRef class="relative min-h-screen">
+  <!-- Título SKILLS que sube -->
+  <div class="fixed inset-0 pointer-events-none z-40 flex items-center justify-center">
+    <h2 #titleRef class="text-[120px] sm:text-[150px] md:text-[180px] lg:text-[200px] font-extrabold text-neutral-900 dark:text-neutral-100 leading-none tracking-tight">
+      .
+    </h2>
+  </div>
+
+  <!-- Grid de burbujas individuales (reemplazando la imagen 25) -->
+  <div class="fixed inset-0 pointer-events-none z-30">
+    @for (bubble of bubbles; track bubble.id) {
+      <img
+        #bubbleImg
+        [src]="bubble.src"
+        [alt]="'Skill bubble ' + bubble.id"
+        class="absolute will-change-transform"
+        [style.width.px]="bubble.width"
+        [style.height.px]="bubble.height"
+      />
+    }
+  </div>
+
+  <!-- Espacio para el scroll -->
+  <div class="h-[1500px]" aria-hidden="true"></div>
+</section>

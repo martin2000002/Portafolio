@@ -35,6 +35,7 @@ export class About implements AfterViewInit, OnDestroy {
   private timelines = new Map<HTMLElement, gsap.core.Timeline>();
   private shapeScrollTrigger?: ScrollTrigger;
   private imageChangeScrollTrigger?: ScrollTrigger;
+  private blobFadeScrollTrigger?: ScrollTrigger;
   private ro?: ResizeObserver;
   private updateShapePositionBound = () => this.updateShapePosition();
   currentImageIndex = 1;
@@ -55,6 +56,8 @@ export class About implements AfterViewInit, OnDestroy {
     this.syncWidth();
     this.updateShapePosition();
     this.setupImageChange();
+    // Esperar un tick para que la sección Skills esté renderizada
+    requestAnimationFrame(() => this.setupBlobFade());
   }
 
   private syncWidth(): void {
@@ -126,6 +129,30 @@ export class About implements AfterViewInit, OnDestroy {
     }
   }
 
+  private getNavbarHeight(): number {
+    const navbar = document.querySelector('app-navbar');
+    if (navbar) {
+      return navbar.getBoundingClientRect().height;
+    }
+    // Fallback: calcular basado en clases de Tailwind
+    const isMd = window.innerWidth >= 768;
+    const isSm = window.innerWidth >= 640;
+    const navbarInnerHeight = isMd ? 76 : (isSm ? 72 : 68); // h-19, h-18, h-17
+    const paddingY = 12; // py-3 = 0.75rem = 12px
+    return navbarInnerHeight + (paddingY * 2);
+  }
+
+  private getAvailableViewportHeight(): number {
+    const navbarHeight = this.getNavbarHeight();
+    return window.innerHeight - navbarHeight;
+  }
+
+  private getAdjustedCenterY(): number {
+    const navbarHeight = this.getNavbarHeight();
+    const availableHeight = this.getAvailableViewportHeight();
+    return navbarHeight + (availableHeight / 2);
+  }
+
   private setupShapeScrollAnim(): void {
     const img = this.shapeRef?.nativeElement;
     if (!img) return;
@@ -134,6 +161,7 @@ export class About implements AfterViewInit, OnDestroy {
     this.updateShapePosition();
     requestAnimationFrame(() => this.updateShapePosition());
     this.setupImageChange();
+    this.setupBlobFade();
   }
 
   private ensurePositionObservers(): void {
@@ -209,7 +237,7 @@ export class About implements AfterViewInit, OnDestroy {
     });
 
     const viewportCenterX = window.innerWidth / 2;
-    const viewportCenterY = window.innerHeight / 2;
+    const viewportCenterY = this.getAdjustedCenterY();
 
     // Crear la animación con valores absolutos
     const animation = gsap.to(img, {
@@ -243,10 +271,10 @@ export class About implements AfterViewInit, OnDestroy {
     }
 
     // Este ScrollTrigger SOLO se activa DESPUÉS de que termine la animación de centrado
-    // La animación de centrado termina en: start (100px) + end (1000px) = 1100px de scroll
+    // La animación de centrado termina en: start (100px) + end (800px) = 900px de scroll
     const totalScrollDistance = this.totalImages * this.pixelsPerImage;
     const viewportCenterX = window.innerWidth / 2;
-    const viewportCenterY = window.innerHeight / 2;
+    const viewportCenterY = this.getAdjustedCenterY();
 
     this.imageChangeScrollTrigger = ScrollTrigger.create({
       trigger: 'section',
@@ -279,12 +307,43 @@ export class About implements AfterViewInit, OnDestroy {
     });
   }
 
+  private setupBlobFade(): void {
+    const img = this.shapeRef?.nativeElement;
+    if (!img) return;
+
+    if (this.blobFadeScrollTrigger) {
+      this.blobFadeScrollTrigger.kill();
+      this.blobFadeScrollTrigger = undefined;
+    }
+
+    // Buscar la sección de Skills para hacer el fade out cuando llegue
+    const skillsSection = document.querySelector('app-skills section');
+    if (!skillsSection) return;
+
+    this.blobFadeScrollTrigger = ScrollTrigger.create({
+      trigger: skillsSection,
+      start: 'top bottom',
+      end: 'top center',
+      scrub: true,
+      markers: false,
+      onUpdate: (self) => {
+        // Hacer fade out del blob a medida que aparece la sección Skills
+        gsap.set(img, {
+          opacity: 1 - self.progress,
+        });
+      },
+    });
+  }
+
   ngOnDestroy(): void {
     if (this.shapeScrollTrigger) {
       this.shapeScrollTrigger.kill();
     }
     if (this.imageChangeScrollTrigger) {
       this.imageChangeScrollTrigger.kill();
+    }
+    if (this.blobFadeScrollTrigger) {
+      this.blobFadeScrollTrigger.kill();
     }
     if (this.ro) {
       this.ro.disconnect();
