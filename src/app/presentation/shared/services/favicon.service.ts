@@ -16,14 +16,14 @@ export class FaviconService {
 
   private setFavicon(mode: ThemeMode): void {
     const id = 'app-favicon';
-    const href = `assets/favicon/${mode === 'dark' ? 'white' : 'black'}.png?v=2`;
+    const href = `assets/favicon/${mode === 'dark' ? 'white' : 'black'}.webp?v=2`;
     let link = document.getElementById(id) as HTMLLinkElement | null;
 
     if (!link) {
       link = document.createElement('link');
       link.id = id;
       link.rel = 'icon';
-      link.type = 'image/png';
+      link.type = 'image/webp';
       document.head.appendChild(link);
     }
 

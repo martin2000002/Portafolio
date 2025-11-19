@@ -74,12 +74,12 @@ src/
 │           └── links.constant.ts     # URLs de redes sociales y CV
 │
 └── assets/
-    ├── 3d_shape/                 # Secuencia de 25 imágenes PNG del blob 3D
-    │   ├── 01.png - 25.png       # (~2.3-3.1 MB cada una)
-    │   └── (Nota: actualmente solo se usa 01.png)
+    ├── 3d_shape/                 # Secuencia de 25 imágenes webp del blob 3D
+    │   ├── 01.webp - 25.webp       # (~2.3-3.1 MB cada una)
+    │   └── (Nota: actualmente solo se usa 01.webp)
     │
     ├── icons_base/               # Iconos de acciones (Contact, CV, GitHub, LinkedIn)
-    ├── profile.png               # Foto de perfil
+    ├── profile.webp               # Foto de perfil
     └── (otros assets)
 ```
 
@@ -235,7 +235,7 @@ src/
 
 ## Assets Pendientes de Uso
 
-**Imágenes del blob 3D (02.png - 25.png):**
+**Imágenes del blob 3D (02.webp - 25.webp):**
 - Ubicación: `src/assets/3d_shape/`
 - Estado: Generadas pero no usadas en código
 - Posible uso futuro: Animación secuencial del blob (como sprite sheet)
@@ -271,7 +271,7 @@ src/
 - `src/app/shared/components/starfield/starfield.ts` - (modificaciones menores)
 
 **Archivos sin tracking:**
-- 24 imágenes PNG del blob 3D (02.png - 25.png)
+- 24 imágenes webp del blob 3D (02.webp - 25.webp)
 
 ---
 
@@ -279,7 +279,7 @@ src/
 
 1. **Optimización de assets:**
    - Considerar comprimir imágenes del blob 3D (actualmente 2-3 MB cada una)
-   - Evaluar uso de WebP en lugar de PNG
+   - Evaluar uso de WebP en lugar de webp
 
 2. **Blob 3D animado:**
    - Implementar secuencia de imágenes 01-25 como sprite animation
