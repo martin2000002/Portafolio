@@ -259,22 +259,28 @@ export class BlobAnimationConfigService {
   /**
    * Calcula el factor de escala para las bubbles basado en las dimensiones originales de la imagen
    * Este scale se usa para escalar las coordenadas y tamaños de las bubbles desde la imagen de referencia (1536×1024)
+   *
+   * Este método replica la lógica original del componente Skills antes de usar el servicio centralizado
    */
   getBlobScale(isMobile: boolean): number {
     if (!this.initialBlobDimensions) {
       return 1; // Fallback
     }
 
-    // Calcular el ancho final del blob después de aplicar BLOB_SCALE
-    const finalBlobWidth = this.getFinalBlobWidth(isMobile);
+    // Replicar la lógica original: ancho inicial del blob * BLOB_SCALE / dimensión original
+    // En desktop: (initialWidth * BLOB_SCALE) / ORIGINAL_WIDTH
+    // En mobile: (initialHeight * BLOB_SCALE) / ORIGINAL_HEIGHT (porque está rotado)
+    const { width: initialBlobWidth, height: initialBlobHeight } = this.initialBlobDimensions;
 
-    // En mobile, el blob está rotado, así que el ancho visual corresponde a la altura original
-    // En desktop, el ancho visual corresponde al ancho original
-    const originalDimension = isMobile ? this.ORIGINAL_BLOB_HEIGHT : this.ORIGINAL_BLOB_WIDTH;
-
-    // Calcular el factor de escala: cuánto se escaló el blob desde su tamaño original
-    // Este es el factor que se debe aplicar a las coordenadas de las bubbles
-    return finalBlobWidth / originalDimension;
+    if (isMobile) {
+      // En mobile rotado, el ancho visual es la altura inicial
+      const finalBlobWidth = initialBlobHeight * this.BLOB_SCALE;
+      return finalBlobWidth / this.ORIGINAL_BLOB_HEIGHT;
+    } else {
+      // En desktop, el ancho visual es el ancho inicial
+      const finalBlobWidth = initialBlobWidth * this.BLOB_SCALE;
+      return finalBlobWidth / this.ORIGINAL_BLOB_WIDTH;
+    }
   }
 
   /**

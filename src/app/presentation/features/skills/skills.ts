@@ -49,28 +49,28 @@ export class Skills implements AfterViewInit, OnDestroy {
   bubbles: Bubble[] = [
     // Fila 1
     {
-      id: '1_1', src: 'assets/skills/1_1.webp',
+      id: '1_1', src: 'assets/skills/bubbles/1_1.webp',
       originalWidth: 210, originalHeight: 194,
       originalX: 218, originalY: 198,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '1_2', src: 'assets/skills/1_2.webp',
+      id: '1_2', src: 'assets/skills/bubbles/1_2.webp',
       originalWidth: 187, originalHeight: 210,
       originalX: 550, originalY: 190,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '1_3', src: 'assets/skills/1_3.webp',
+      id: '1_3', src: 'assets/skills/bubbles/1_3.webp',
       originalWidth: 203, originalHeight: 151,
       originalX: 860, originalY: 187,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '1_4', src: 'assets/skills/1_4.webp',
+      id: '1_4', src: 'assets/skills/bubbles/1_4.webp',
       originalWidth: 205, originalHeight: 205,
       originalX: 1135, originalY: 187,
       offsetX: 0, offsetY: 0,
@@ -79,28 +79,28 @@ export class Skills implements AfterViewInit, OnDestroy {
 
     // Fila 2
     {
-      id: '2_1', src: 'assets/skills/2_1.webp',
+      id: '2_1', src: 'assets/skills/bubbles/2_1.webp',
       originalWidth: 171, originalHeight: 125,
       originalX: 170, originalY: 447,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '2_2', src: 'assets/skills/2_2.webp',
+      id: '2_2', src: 'assets/skills/bubbles/2_2.webp',
       originalWidth: 158, originalHeight: 196,
       originalX: 547, originalY: 440,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '2_3', src: 'assets/skills/2_3.webp',
+      id: '2_3', src: 'assets/skills/bubbles/2_3.webp',
       originalWidth: 154, originalHeight: 216,
       originalX: 870, originalY: 400,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '2_4', src: 'assets/skills/2_4.webp',
+      id: '2_4', src: 'assets/skills/bubbles/2_4.webp',
       originalWidth: 153, originalHeight: 122,
       originalX: 1202, originalY: 447,
       offsetX: 0, offsetY: 0,
@@ -109,35 +109,35 @@ export class Skills implements AfterViewInit, OnDestroy {
 
     // Fila 3
     {
-      id: '3_1', src: 'assets/skills/3_1.webp',
+      id: '3_1', src: 'assets/skills/bubbles/3_1.webp',
       originalWidth: 172, originalHeight: 202,
       originalX: 206, originalY: 640,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '3_2', src: 'assets/skills/3_2.webp',
+      id: '3_2', src: 'assets/skills/bubbles/3_2.webp',
       originalWidth: 167, originalHeight: 148,
       originalX: 424, originalY: 672,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '3_3', src: 'assets/skills/3_3.webp',
+      id: '3_3', src: 'assets/skills/bubbles/3_3.webp',
       originalWidth: 208, originalHeight: 201,
       originalX: 690, originalY: 650,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '3_4', src: 'assets/skills/3_4.webp',
+      id: '3_4', src: 'assets/skills/bubbles/3_4.webp',
       originalWidth: 187, originalHeight: 157,
       originalX: 948, originalY: 668,
       offsetX: 0, offsetY: 0,
       width: 0, height: 0, x: 0, y: 0
     },
     {
-      id: '3_5', src: 'assets/skills/3_5.webp',
+      id: '3_5', src: 'assets/skills/bubbles/3_5.webp',
       originalWidth: 170, originalHeight: 210,
       originalX: 1195, originalY: 637,
       offsetX: 0, offsetY: 0,
@@ -147,9 +147,21 @@ export class Skills implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     gsap.registerPlugin(ScrollTrigger);
-    this.calculateBubblePositions();
-    this.setupTitleAnimation();
-    this.setupBubblesAnimation();
+
+    // Esperar a que el blob tenga dimensiones establecidas antes de calcular posiciones
+    const waitForBlobDimensions = () => {
+      // Intentar calcular, si falla (dimensiones no disponibles), reintentar
+      this.calculateBubblePositions();
+      this.setupTitleAnimation();
+      this.setupBubblesAnimation();
+    };
+
+    // Ejecutar inmediatamente
+    waitForBlobDimensions();
+
+    // También ejecutar después de un pequeño delay para asegurar que las dimensiones estén disponibles
+    requestAnimationFrame(() => waitForBlobDimensions());
+    setTimeout(() => waitForBlobDimensions(), 100);
   }
 
   @HostListener('window:resize')

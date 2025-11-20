@@ -248,7 +248,7 @@ export class About implements AfterViewInit, OnDestroy {
         start: scrollTriggerStart,
         end: `+=${this.config.CENTERING_DURATION}`,
         scrub: true,
-        markers: true,
+        markers: false,
         invalidateOnRefresh: true, // Recalcular valores en cada refresh
       },
     });
