@@ -93,17 +93,35 @@ export class About implements AfterViewInit, OnDestroy {
       const icon = el.querySelector('lucide-icon');
       if (!img || !icon) return;
 
+      // Animación de hover moderna - solo escala suave (igual que Skills)
       const tl = gsap
         .timeline({ paused: true })
-        .to([img, icon], { y: -8, rotate: 4, duration: 0.25, ease: 'power2.out' })
-        .to([img, icon], { y: -4, rotate: -2, duration: 0.18, ease: 'power1.out' })
-        .to([img, icon], { y: 0, rotate: 0, duration: 0.22, ease: 'power1.out' });
+        .to([img, icon], {
+          scale: 1.1,
+          duration: 0.5,
+          ease: 'power2.out'
+        });
 
       this.timelines.set(el, tl);
-      el.addEventListener('mouseenter', () => tl.play(0));
+      el.addEventListener('mouseenter', () => tl.play());
       el.addEventListener('mouseleave', () => tl.reverse());
-      el.addEventListener('focus', () => tl.play(0));
+      el.addEventListener('focus', () => tl.play());
       el.addEventListener('blur', () => tl.reverse());
+
+      // Animación de click - solo escala con bounce (igual que Skills)
+      el.addEventListener('click', () => {
+        gsap.timeline()
+          .to([img, icon], {
+            scale: 1.15,
+            duration: 0.15,
+            ease: 'power2.out'
+          })
+          .to([img, icon], {
+            scale: 1,
+            duration: 0.35,
+            ease: 'back.out(1.4)'
+          });
+      });
     });
   }
 

@@ -31,14 +31,51 @@ export class Navbar implements AfterViewInit, OnDestroy {
   readonly menuOpen = signal(false);
 
   readonly menuItems = [
-    { label: 'About', icon: UserIcon },
-    { label: 'Skills', icon: SparklesIcon },
-    { label: 'Projects', icon: FolderGit2Icon },
-    { label: 'Contact', icon: MailIcon },
+    { label: 'About', icon: UserIcon, section: 'about' },
+    { label: 'Skills', icon: SparklesIcon, section: 'skills' },
+    { label: 'Projects', icon: FolderGit2Icon, section: 'projects' },
+    { label: 'Contact', icon: MailIcon, section: 'contact' },
   ] as const;
 
   toggleTheme(): void {
     this.theme.toggle();
+  }
+
+  onMenuItemClick(sectionId: string): void {
+    this.closeMenu();
+
+    // Esperar a que el menú se cierre antes de scrollear
+    setTimeout(() => {
+      if (sectionId === 'skills') {
+        // Para Skills, usar el punto de anclaje específico
+        this.scrollToSkillsAnchor();
+      } else {
+        // Para otras secciones, scroll normal
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }, 300);
+  }
+
+  private scrollToSkillsAnchor(): void {
+    // Buscar la sección de Skills
+    const skillsSection = document.querySelector('app-skills section');
+    if (!skillsSection) return;
+
+    const isMobile = window.innerWidth < 640;
+    const sectionTop = (skillsSection as HTMLElement).offsetTop;
+    const viewportCenter = window.innerHeight / 2;
+    const phase1Duration = isMobile ? 500 : 700;
+
+    // Calcular la posición de scroll del punto de anclaje (fase 2)
+    const scrollPosition = sectionTop - viewportCenter + phase1Duration;
+
+    window.scrollTo({
+      top: scrollPosition,
+      behavior: 'smooth',
+    });
   }
 
   ngAfterViewInit(): void {
