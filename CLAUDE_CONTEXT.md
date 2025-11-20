@@ -1,7 +1,7 @@
 # Contexto del Proyecto - Portafolio de Martín Montero
 
 ## Descripción General
-Portafolio personal web desarrollado como proyecto universitario para la materia de Diseño Web en USFQ (Universidad San Francisco de Quito), Semestre 7.
+Portafolio personal web desarrollado como proyecto universitario para la materia de Diseño Web.
 
 El portafolio presenta una experiencia visual moderna e interactiva con animaciones fluidas y un diseño responsive.
 
@@ -29,6 +29,7 @@ El portafolio presenta una experiencia visual moderna e interactiva con animacio
 
 ### Iconografía
 - **Lucide Angular 0.552.0** - Iconos SVG optimizados
+- **Hero Icons** 
 
 ---
 

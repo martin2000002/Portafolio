@@ -3,6 +3,7 @@ import { LucideAngularModule, MailIcon, BookOpenIcon, GithubIcon, LinkedinIcon }
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { LINKS } from '../../shared/constants/links.constant';
+import { BlobAnimationConfigService } from '../../shared/services/blob-animation-config.service';
 
 @Component({
   selector: 'app-about',
@@ -39,10 +40,11 @@ export class About implements AfterViewInit, OnDestroy {
   private ro?: ResizeObserver;
   private updateShapePositionBound = () => this.updateShapePosition();
   currentImageIndex = 1;
-  readonly totalImages = 25;
-  readonly pixelsPerImage = 50; // Píxeles de scroll por cada cambio de imagen
-  
-  constructor(private readonly cdr: ChangeDetectorRef) {}
+
+  constructor(
+    private readonly cdr: ChangeDetectorRef,
+    readonly config: BlobAnimationConfigService
+  ) {}
 
   ngAfterViewInit(): void {
     gsap.registerPlugin(ScrollTrigger);
@@ -130,27 +132,15 @@ export class About implements AfterViewInit, OnDestroy {
   }
 
   private getNavbarHeight(): number {
-    const navbar = document.querySelector('app-navbar');
-    if (navbar) {
-      return navbar.getBoundingClientRect().height;
-    }
-    // Fallback: calcular basado en clases de Tailwind
-    const isMd = window.innerWidth >= 768;
-    const isSm = window.innerWidth >= 640;
-    const navbarInnerHeight = isMd ? 76 : (isSm ? 72 : 68); // h-19, h-18, h-17
-    const paddingY = 12; // py-3 = 0.75rem = 12px
-    return navbarInnerHeight + (paddingY * 2);
+    return this.config.getNavbarHeight();
   }
 
   private getAvailableViewportHeight(): number {
-    const navbarHeight = this.getNavbarHeight();
-    return window.innerHeight - navbarHeight;
+    return this.config.getAvailableViewportHeight();
   }
 
   private getAdjustedCenterY(): number {
-    const navbarHeight = this.getNavbarHeight();
-    const availableHeight = this.getAvailableViewportHeight();
-    return navbarHeight + (availableHeight / 2);
+    return this.config.getAdjustedCenterY();
   }
 
   private setupShapeScrollAnim(): void {
@@ -189,6 +179,10 @@ export class About implements AfterViewInit, OnDestroy {
     const img = this.shapeRef?.nativeElement;
     if (!img) return;
 
+    // Establecer las dimensiones iniciales del blob en el servicio
+    // Esto se hace cada vez que se actualiza la posición (resize, load, etc.)
+    this.config.setInitialBlobDimensions(img.offsetWidth, img.offsetHeight);
+
     // Matar el ScrollTrigger y limpiar TODAS las propiedades GSAP previas
     if (this.shapeScrollTrigger) {
       this.shapeScrollTrigger.kill();
@@ -200,8 +194,8 @@ export class About implements AfterViewInit, OnDestroy {
 
     const isMobile = window.innerWidth < 640;
 
-    let initialRotation: number;
-    let finalRotation: number;
+    const initialRotation = this.config.getInitialRotation(isMobile);
+    const finalRotation = this.config.getFinalRotation(isMobile);
     let initialX = 0;
     let initialY = 0;
 
@@ -212,9 +206,7 @@ export class About implements AfterViewInit, OnDestroy {
       const jelliesRect = jelliesMobile.getBoundingClientRect();
       initialX = (window.innerWidth - img.offsetWidth) / 2;
       // Convertir a posición absoluta sumando el scroll actual
-      initialY = jelliesRect.bottom + window.scrollY + 30;
-      initialRotation = 90 + 30;
-      finalRotation = 90;
+      initialY = jelliesRect.bottom + window.scrollY + 40;
     } else {
       const profileImg = this.profileRef?.nativeElement;
       if (!profileImg) return;
@@ -222,9 +214,7 @@ export class About implements AfterViewInit, OnDestroy {
       const profileRect = profileImg.getBoundingClientRect();
       initialX = profileRect.right + 50 - img.offsetWidth;
       // Convertir a posición absoluta sumando el scroll actual
-      initialY = profileRect.bottom + window.scrollY + 0;
-      initialRotation = 0;
-      finalRotation = 0;
+      initialY = profileRect.bottom + window.scrollY + 20;
     }
 
     // Establecer posición inicial de manera determinística
@@ -240,19 +230,25 @@ export class About implements AfterViewInit, OnDestroy {
     const viewportCenterY = this.getAdjustedCenterY();
 
     // Crear la animación con valores absolutos
+    // En mobile: inicia cuando el blob entra en viewport (top del blob toca bottom del viewport)
+    // En desktop: inicia después del offset estándar
+    const scrollTriggerStart = isMobile
+      ? `top bottom+=${this.config.CENTERING_START_OFFSET}` // Cuando el top del blob toque el bottom del viewport
+      : `top top+=${this.config.CENTERING_START_OFFSET}`;
+
     const animation = gsap.to(img, {
       x: viewportCenterX - (img.offsetWidth / 2),
       y: viewportCenterY - (img.offsetHeight / 2),
-      scale: 1.4,
+      scale: this.config.BLOB_SCALE,
       rotation: finalRotation,
       ease: 'none',
       force3D: true,
       scrollTrigger: {
-        trigger: 'section',
-        start: 'top top+=100',
-        end: '+=800',
+        trigger: isMobile ? img : 'section',
+        start: scrollTriggerStart,
+        end: `+=${this.config.CENTERING_DURATION}`,
         scrub: true,
-        markers: false,
+        markers: true,
         invalidateOnRefresh: true, // Recalcular valores en cada refresh
       },
     });
@@ -271,15 +267,14 @@ export class About implements AfterViewInit, OnDestroy {
     }
 
     // Este ScrollTrigger SOLO se activa DESPUÉS de que termine la animación de centrado
-    // La animación de centrado termina en: start (100px) + end (800px) = 900px de scroll
-    const totalScrollDistance = this.totalImages * this.pixelsPerImage;
     const viewportCenterX = window.innerWidth / 2;
     const viewportCenterY = this.getAdjustedCenterY();
+    const isMobile = window.innerWidth < 640;
 
     this.imageChangeScrollTrigger = ScrollTrigger.create({
       trigger: 'section',
-      start: 'top top-=900', // Empieza DESPUÉS de que la animación termine (100 + 800)
-      end: `top top-=${900 + totalScrollDistance}`, // Scroll total para todas las imágenes
+      start: `top top-=${this.config.CENTERING_END}`, // Empieza DESPUÉS de que la animación termine
+      end: `top top-=${this.config.SEQUENCE_END}`, // Scroll total para todas las imágenes
       scrub: true,
       markers: false,
       onUpdate: (self) => {
@@ -287,15 +282,15 @@ export class About implements AfterViewInit, OnDestroy {
         gsap.set(img, {
           x: viewportCenterX - (img.offsetWidth / 2),
           y: viewportCenterY - (img.offsetHeight / 2),
-          scale: 1.4,
-          rotation: window.innerWidth < 640 ? 90 : 0,
+          scale: this.config.BLOB_SCALE,
+          rotation: this.config.getFinalRotation(isMobile),
           force3D: true,
         });
 
         // Calcular qué imagen mostrar basado en el progreso
         // progress va de 0 a 1, lo multiplicamos por el total de imágenes
-        const imageIndex = Math.floor(self.progress * this.totalImages) + 1;
-        const clampedIndex = Math.min(Math.max(imageIndex, 1), this.totalImages);
+        const imageIndex = Math.floor(self.progress * this.config.TOTAL_IMAGES) + 1;
+        const clampedIndex = Math.min(Math.max(imageIndex, 1), this.config.TOTAL_IMAGES);
 
         if (clampedIndex !== this.currentImageIndex) {
           this.currentImageIndex = clampedIndex;
@@ -316,21 +311,22 @@ export class About implements AfterViewInit, OnDestroy {
       this.blobFadeScrollTrigger = undefined;
     }
 
-    // Buscar la sección de Skills para hacer el fade out cuando llegue
+    // Buscar la sección de Skills para ocultar el blob cuando llegue
     const skillsSection = document.querySelector('app-skills section');
     if (!skillsSection) return;
 
     this.blobFadeScrollTrigger = ScrollTrigger.create({
       trigger: skillsSection,
-      start: 'top bottom',
+      start: 'top center',
       end: 'top center',
-      scrub: true,
       markers: false,
-      onUpdate: (self) => {
-        // Hacer fade out del blob a medida que aparece la sección Skills
-        gsap.set(img, {
-          opacity: 1 - self.progress,
-        });
+      onEnter: () => {
+        // Ocultar el blob instantáneamente cuando la sección Skills llega al centro
+        gsap.set(img, { opacity: 0 });
+      },
+      onLeaveBack: () => {
+        // Mostrar el blob instantáneamente cuando se hace scroll hacia atrás
+        gsap.set(img, { opacity: 1 });
       },
     });
   }

@@ -1,6 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { BlobAnimationConfigService } from '../../shared/services/blob-animation-config.service';
 
 interface BubbleConfig {
   id: string;
@@ -43,10 +44,7 @@ export class Skills implements AfterViewInit, OnDestroy {
   private titleScrollTrigger?: ScrollTrigger;
   private bubblesScrollTrigger?: ScrollTrigger;
 
-  // Configuración de burbujas basada en imagen original de 1536x1024
-  // Para ajustar posiciones, usa offsetX y offsetY
-  private readonly ORIGINAL_BLOB_WIDTH = 1536;
-  private readonly ORIGINAL_BLOB_HEIGHT = 1024;
+  constructor(private readonly config: BlobAnimationConfigService) {}
 
   bubbles: Bubble[] = [
     // Fila 1
@@ -162,43 +160,35 @@ export class Skills implements AfterViewInit, OnDestroy {
   }
 
   private getNavbarHeight(): number {
-    const navbar = document.querySelector('app-navbar');
-    if (navbar) {
-      return navbar.getBoundingClientRect().height;
-    }
-    const isMd = window.innerWidth >= 768;
-    const isSm = window.innerWidth >= 640;
-    const navbarInnerHeight = isMd ? 76 : (isSm ? 72 : 68);
-    const paddingY = 12;
-    return navbarInnerHeight + (paddingY * 2);
+    return this.config.getNavbarHeight();
   }
 
   private getAdjustedCenterY(): number {
-    const navbarHeight = this.getNavbarHeight();
-    const availableHeight = window.innerHeight - navbarHeight;
-    return navbarHeight + (availableHeight / 2);
+    return this.config.getAdjustedCenterY();
   }
 
   private calculateBubblePositions(): void {
     // Obtener las dimensiones finales del blob en About
     const isMobile = window.innerWidth < 640;
-    const baseBlobWidth = isMobile ? window.innerWidth * 0.85 : window.innerWidth * 0.65;
-    const maxBlobWidth = isMobile ? 900 : 700;
-    const finalBlobWidth = Math.min(baseBlobWidth, maxBlobWidth) * 1.4; // scale: 1.4
+    const finalBlobWidth = this.config.getFinalBlobWidth(isMobile);
 
     // Calcular el factor de escala basado en el ancho final del blob vs el original
-    const scale = finalBlobWidth / this.ORIGINAL_BLOB_WIDTH;
+    const scale = this.config.getBlobScale(isMobile);
 
     // Calcular el centro donde debe estar el blob
     const centerX = window.innerWidth / 2;
     const centerY = this.getAdjustedCenterY();
 
     // La altura escalada del blob original
-    const finalBlobHeight = this.ORIGINAL_BLOB_HEIGHT * scale;
+    const finalBlobHeight = this.config.ORIGINAL_BLOB_HEIGHT * scale;
 
     // Punto superior izquierdo del blob escalado y centrado
     const blobStartX = centerX - (finalBlobWidth / 2);
     const blobStartY = centerY - (finalBlobHeight / 2);
+
+    // Centro del blob (punto de rotación)
+    const blobCenterX = centerX;
+    const blobCenterY = centerY;
 
     // Calcular posición y tamaño de cada burbuja
     this.bubbles.forEach(bubble => {
@@ -207,12 +197,35 @@ export class Skills implements AfterViewInit, OnDestroy {
       bubble.height = bubble.originalHeight * scale;
 
       // Escalar posiciones relativas
-      const scaledX = bubble.originalX * scale;
-      const scaledY = bubble.originalY * scale;
+      let scaledX = bubble.originalX * scale;
+      let scaledY = bubble.originalY * scale;
 
-      // Calcular posición absoluta en pantalla
-      bubble.x = blobStartX + scaledX + (bubble.offsetX || 0);
-      bubble.y = blobStartY + scaledY + (bubble.offsetY || 0);
+      // En mobile, rotar las coordenadas 90 grados alrededor del centro del blob
+      if (isMobile) {
+        // Posición relativa al centro del blob ANTES de escalar
+        const relativeX = bubble.originalX + (bubble.originalWidth / 2) - (this.config.ORIGINAL_BLOB_WIDTH / 2);
+        const relativeY = bubble.originalY + (bubble.originalHeight / 2) - (this.config.ORIGINAL_BLOB_HEIGHT / 2);
+
+        // Rotar 90 grados: (x, y) -> (-y, x)
+        const rotatedRelativeX = -relativeY;
+        const rotatedRelativeY = relativeX;
+
+        // Escalar después de rotar
+        const scaledRotatedX = rotatedRelativeX * scale;
+        const scaledRotatedY = rotatedRelativeY * scale;
+
+        // Convertir de vuelta a coordenadas absolutas centradas
+        scaledX = scaledRotatedX - (bubble.width / 2);
+        scaledY = scaledRotatedY - (bubble.height / 2);
+
+        // Calcular posición absoluta en pantalla
+        bubble.x = blobCenterX + scaledX + (bubble.offsetX || 0);
+        bubble.y = blobCenterY + scaledY + (bubble.offsetY || 0);
+      } else {
+        // Desktop: usar coordenadas normales
+        bubble.x = blobStartX + scaledX + (bubble.offsetX || 0);
+        bubble.y = blobStartY + scaledY + (bubble.offsetY || 0);
+      }
     });
   }
 
@@ -260,6 +273,8 @@ export class Skills implements AfterViewInit, OnDestroy {
     }
 
     // Posicionar inicialmente todas las burbujas en su posición calculada
+    const isMobile = window.innerWidth < 640;
+
     this.bubbleImgs.forEach((ref, index) => {
       const bubble = this.bubbles[index];
       const img = ref.nativeElement;
@@ -269,25 +284,30 @@ export class Skills implements AfterViewInit, OnDestroy {
         y: bubble.y,
         width: bubble.width,
         height: bubble.height,
+        rotation: this.config.getFinalRotation(isMobile), // Rotar 90° en mobile para alinear con blob
         opacity: 0, // Inicialmente invisible
         force3D: true,
       });
     });
 
-    // ScrollTrigger para mostrar las burbujas cuando comienza la sección
+    // ScrollTrigger para mostrar las burbujas instantáneamente cuando comienza la sección
     this.bubblesScrollTrigger = ScrollTrigger.create({
       trigger: section,
-      start: 'top bottom',
+      start: 'top center',
       end: 'top center',
-      scrub: true,
       markers: false,
-      onUpdate: (self) => {
-        // Gradualmente hacer visible las burbujas
+      onEnter: () => {
+        // Mostrar las burbujas instantáneamente
         this.bubbleImgs.forEach((ref) => {
           const img = ref.nativeElement;
-          gsap.set(img, {
-            opacity: self.progress,
-          });
+          gsap.set(img, { opacity: 1 });
+        });
+      },
+      onLeaveBack: () => {
+        // Ocultar las burbujas instantáneamente cuando se hace scroll hacia atrás
+        this.bubbleImgs.forEach((ref) => {
+          const img = ref.nativeElement;
+          gsap.set(img, { opacity: 0 });
         });
       },
     });

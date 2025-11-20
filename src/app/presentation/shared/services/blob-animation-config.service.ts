@@ -1,0 +1,293 @@
+import { Injectable } from '@angular/core';
+
+/**
+ * Servicio centralizado para la configuración de las animaciones del blob 3D
+ *
+ * Este servicio garantiza que todas las animaciones estén sincronizadas:
+ * 1. Animación de centrado del blob (About)
+ * 2. Animación de transformación blob -> bubbles (About)
+ * 3. Animación de aparición de bubbles individuales (Skills)
+ */
+@Injectable({
+  providedIn: 'root'
+})
+export class BlobAnimationConfigService {
+
+  // ==========================================
+  // CONFIGURACIÓN DE SCROLL - ANIMACIÓN 1
+  // ==========================================
+
+  /**
+   * Píxeles de scroll antes de empezar a centrar el blob (valor base para desktop)
+   */
+
+  /**
+   * Obtiene el offset de inicio dinámicamente según el dispositivo y aspect ratio
+   */
+  get CENTERING_START_OFFSET(): number {
+    const isMobile = window.innerWidth < 640;
+
+    if (isMobile) {
+      const aspectRatio = window.innerHeight / window.innerWidth;
+      // Si el aspect ratio es <= 1.8 (dispositivos más cuadrados), usar offset 100
+      // Si es > 1.8 (dispositivos muy alargados), usar offset 0
+      return aspectRatio <= 1.8 ? 80 : 0;
+    }
+
+    // Desktop: siempre 100
+    return 100;
+  }
+
+  /**
+   * Píxeles de scroll que toma centrar el blob
+   * Controla la velocidad de la animación de centrado
+   */
+  readonly CENTERING_DURATION = 800;
+
+  /**
+   * Punto final de la animación de centrado
+   * Calculado: CENTERING_START_OFFSET + CENTERING_DURATION
+   */
+  get CENTERING_END(): number {
+    return this.CENTERING_START_OFFSET + this.CENTERING_DURATION;
+  }
+
+  // ==========================================
+  // CONFIGURACIÓN DE SCROLL - ANIMACIÓN 2
+  // ==========================================
+
+  /**
+   * Total de imágenes en la secuencia de transformación
+   */
+  readonly TOTAL_IMAGES = 25;
+
+  /**
+   * Píxeles de scroll por cada cambio de imagen
+   * Controla la velocidad de la secuencia de transformación
+   */
+  readonly PIXELS_PER_IMAGE = 50;
+
+  /**
+   * Distancia total de scroll para la secuencia completa
+   * Calculado: TOTAL_IMAGES * PIXELS_PER_IMAGE
+   */
+  get SEQUENCE_DURATION(): number {
+    return this.TOTAL_IMAGES * this.PIXELS_PER_IMAGE;
+  }
+
+  /**
+   * Punto donde termina la secuencia de transformación
+   * Calculado: CENTERING_END + SEQUENCE_DURATION
+   */
+  get SEQUENCE_END(): number {
+    return this.CENTERING_END + this.SEQUENCE_DURATION;
+  }
+
+  // ==========================================
+  // CONFIGURACIÓN DE TAMAÑO Y ESCALA
+  // ==========================================
+
+  /**
+   * Margen alrededor del blob cuando está centrado (en píxeles)
+   */
+  readonly BLOB_MARGIN = 10;
+
+  /**
+   * Dimensiones iniciales del blob (obtenidas del DOM)
+   * Se establecen desde el componente About cuando se renderiza
+   */
+  private initialBlobDimensions: { width: number; height: number } | null = null;
+
+  /**
+   * Establece las dimensiones iniciales del blob desde el DOM
+   * Debe ser llamado desde el componente About después de que el blob se haya renderizado
+   */
+  setInitialBlobDimensions(width: number, height: number): void {
+    this.initialBlobDimensions = { width, height };
+    console.log('initial dimentions', this.initialBlobDimensions);
+  }
+
+  /**
+   * Calcula la escala óptima del blob para que ocupe el máximo espacio posible
+   * sin salirse del viewport (considerando navbar y margen)
+   */
+  get BLOB_SCALE(): number {
+    // Si no se han establecido las dimensiones iniciales, retornar un valor por defecto
+    if (!this.initialBlobDimensions) {
+      return 1.4; // Fallback al valor anterior
+    }
+
+    const navbarHeight = this.getNavbarHeight();
+    const availableWidth = window.innerWidth - (this.BLOB_MARGIN * 2);
+    const availableHeight = window.innerHeight - navbarHeight - (this.BLOB_MARGIN * 2);
+
+    const isMobile = window.innerWidth < 640;
+
+    // Usar las dimensiones reales del blob obtenidas del DOM
+    const { width: initialBlobWidth, height: initialBlobHeight } = this.initialBlobDimensions;
+
+    // En mobile (rotado 90°), las dimensiones visuales se invierten:
+    // - El ANCHO inicial se convierte en ALTURA visual
+    // - La ALTURA inicial se convierte en ANCHO visual
+    let visualWidth: number;
+    let visualHeight: number;
+
+    if (isMobile) {
+      // Blob rotado 90°: altura inicial → ancho visual, ancho inicial → altura visual
+      visualWidth = initialBlobHeight;
+      visualHeight = initialBlobWidth;
+    } else {
+      // Desktop: sin rotación
+      visualWidth = initialBlobWidth;
+      visualHeight = initialBlobHeight;
+    }
+
+    // Calcular el scale multiplicador necesario para cada dimensión
+    const scaleByWidth = availableWidth / visualWidth;
+    const scaleByHeight = availableHeight / visualHeight;
+
+    // Usar el menor de los dos para asegurar que cabe en ambas dimensiones
+    // con exactamente BLOB_MARGIN px de margen en los lados que tocan
+    console.log('scale: ', Math.min(scaleByWidth, scaleByHeight));
+    return Math.min(scaleByWidth, scaleByHeight);
+  }
+
+  // ==========================================
+  // DIMENSIONES ORIGINALES DE LA IMAGEN
+  // ==========================================
+
+  /**
+   * Ancho original de la imagen del blob (referencia)
+   */
+  readonly ORIGINAL_BLOB_WIDTH = 1536;
+
+  /**
+   * Alto original de la imagen del blob (referencia)
+   */
+  readonly ORIGINAL_BLOB_HEIGHT = 1024;
+
+  // ==========================================
+  // CONFIGURACIÓN DE ROTACIÓN
+  // ==========================================
+
+  /**
+   * Rotación inicial del blob en desktop
+   */
+  readonly DESKTOP_INITIAL_ROTATION = 0;
+
+  /**
+   * Rotación final del blob en desktop
+   */
+  readonly DESKTOP_FINAL_ROTATION = 0;
+
+  /**
+   * Rotación inicial del blob en mobile
+   */
+  readonly MOBILE_INITIAL_ROTATION = 90 + 30;
+
+  /**
+   * Rotación final del blob en mobile
+   */
+  readonly MOBILE_FINAL_ROTATION = 90;
+
+  // ==========================================
+  // ALTURA DE SCROLL DEL CONTENEDOR
+  // ==========================================
+
+  /**
+   * Altura total del div de scroll en About
+   * Debe ser suficiente para las animaciones 1 y 2
+   * Calculado: SEQUENCE_END + margen de seguridad
+   */
+  get ABOUT_SCROLL_HEIGHT(): number {
+    return this.SEQUENCE_END + 100; // Margen de seguridad
+  }
+
+  // ==========================================
+  // MÉTODOS DE CÁLCULO
+  // ==========================================
+
+  /**
+   * Calcula el ancho final del blob basado en el viewport
+   */
+  getFinalBlobWidth(isMobile: boolean): number {
+    if (!this.initialBlobDimensions) {
+      return 0; // Fallback si no se han establecido dimensiones
+    }
+
+    // En mobile rotado 90°, el ancho visual es la altura inicial
+    if (isMobile) {
+      return this.initialBlobDimensions.height * this.BLOB_SCALE;
+    }
+
+    // En desktop, el ancho visual es el ancho inicial
+    return this.initialBlobDimensions.width * this.BLOB_SCALE;
+  }
+
+  /**
+   * Calcula la altura del navbar
+   */
+  getNavbarHeight(): number {
+    const navbar = document.querySelector('app-navbar');
+    if (navbar) {
+      return navbar.getBoundingClientRect().height;
+    }
+    const isMd = window.innerWidth >= 768;
+    const isSm = window.innerWidth >= 640;
+    const navbarInnerHeight = isMd ? 76 : (isSm ? 72 : 68);
+    const paddingY = 12;
+    return navbarInnerHeight + (paddingY * 2);
+  }
+
+  /**
+   * Calcula la altura disponible del viewport (sin navbar)
+   */
+  getAvailableViewportHeight(): number {
+    const navbarHeight = this.getNavbarHeight();
+    return window.innerHeight - navbarHeight;
+  }
+
+  /**
+   * Calcula el centro vertical ajustado (considerando navbar)
+   */
+  getAdjustedCenterY(): number {
+    const navbarHeight = this.getNavbarHeight();
+    const availableHeight = this.getAvailableViewportHeight();
+    return navbarHeight + (availableHeight / 2);
+  }
+
+  /**
+   * Calcula el factor de escala para las bubbles basado en las dimensiones originales de la imagen
+   * Este scale se usa para escalar las coordenadas y tamaños de las bubbles desde la imagen de referencia (1536×1024)
+   */
+  getBlobScale(isMobile: boolean): number {
+    if (!this.initialBlobDimensions) {
+      return 1; // Fallback
+    }
+
+    // Calcular el ancho final del blob después de aplicar BLOB_SCALE
+    const finalBlobWidth = this.getFinalBlobWidth(isMobile);
+
+    // En mobile, el blob está rotado, así que el ancho visual corresponde a la altura original
+    // En desktop, el ancho visual corresponde al ancho original
+    const originalDimension = isMobile ? this.ORIGINAL_BLOB_HEIGHT : this.ORIGINAL_BLOB_WIDTH;
+
+    // Calcular el factor de escala: cuánto se escaló el blob desde su tamaño original
+    // Este es el factor que se debe aplicar a las coordenadas de las bubbles
+    return finalBlobWidth / originalDimension;
+  }
+
+  /**
+   * Obtiene la rotación inicial según el dispositivo
+   */
+  getInitialRotation(isMobile: boolean): number {
+    return isMobile ? this.MOBILE_INITIAL_ROTATION : this.DESKTOP_INITIAL_ROTATION;
+  }
+
+  /**
+   * Obtiene la rotación final según el dispositivo
+   */
+  getFinalRotation(isMobile: boolean): number {
+    return isMobile ? this.MOBILE_FINAL_ROTATION : this.DESKTOP_FINAL_ROTATION;
+  }
+}
