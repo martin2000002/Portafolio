@@ -126,6 +126,10 @@ export class Skills implements AfterViewInit, OnDestroy {
     document.dispatchEvent(new Event('skills-blob-reset'));
   }
 
+  private emitSkillsBlobTakeover(): void {
+    document.dispatchEvent(new Event('skills-blob-takeover'));
+  }
+
   // Helper para obtener la skill correcta según el modo (desktop/mobile)
   private getSkill(bubble: Bubble, isMobile: boolean): SkillData | undefined {
     return isMobile ? bubble.skill_mobile : bubble.skill_desktop;
@@ -795,6 +799,13 @@ export class Skills implements AfterViewInit, OnDestroy {
       scrub: true,
       markers: false,
       invalidateOnRefresh: true,
+      onEnter: () => {
+        gsap.set(reverseBlob, { opacity: 1 });
+      },
+      onEnterBack: () => {
+        gsap.set(reverseBlob, { opacity: 1 });
+        this.emitSkillsBlobTakeover();
+      },
       onLeave: () => {
         // Al terminar la fase (scrolleando hacia abajo), ocultar blob inmediato y notificar a Projects
         gsap.set(reverseBlob, { opacity: 0 });

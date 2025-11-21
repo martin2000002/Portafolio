@@ -4,12 +4,13 @@
   class="relative min-h-[90vh] w-full flex items-center justify-center py-16 px-4 md:px-6 lg:px-10"
 >
   <div
-    class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_1fr] gap-10 items-start"
+    class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_1fr] gap-10 items-center"
   >
     <!-- Left: Form -->
     <div #formRef class="w-full opacity-0">
       <div
-        class="max-w-[520px] mx-auto bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200 dark:border-white/10 rounded-3xl p-6 md:p-10 shadow-2xl"
+        id="contact-card"
+        class="max-w-[520px] mx-auto bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200 dark:border-white/10 rounded-3xl p-6 md:p-10 shadow-2xl max-h-[calc(100vh-200px)] overflow-y-auto"
       >
         <h2
           class="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-white mb-4"

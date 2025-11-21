@@ -155,6 +155,7 @@ export class Projects implements AfterViewInit, OnDestroy {
   private lastBlobPosition = { x: 0, y: 0 };
   private readonly onSkillsBlobFinished = (event: Event) => this.handleSkillsBlobFinished(event as CustomEvent<BlobSyncPayload>);
   private readonly onSkillsBlobReset = () => this.handleSkillsBlobReset();
+  private readonly onSkillsBlobTakeover = () => this.handleSkillsBlobTakeover();
 
   ngAfterViewInit(): void {
     gsap.registerPlugin(ScrollTrigger);
@@ -163,6 +164,7 @@ export class Projects implements AfterViewInit, OnDestroy {
     this.setupContactTransition();
     document.addEventListener('skills-blob-finished', this.onSkillsBlobFinished);
     document.addEventListener('skills-blob-reset', this.onSkillsBlobReset);
+    document.addEventListener('skills-blob-takeover', this.onSkillsBlobTakeover);
   }
 
   private setupBlobPosition(): void {
@@ -231,7 +233,7 @@ export class Projects implements AfterViewInit, OnDestroy {
         trigger: section,
         start: 'top bottom', // Start when section top hits viewport bottom
         end: 'top top+=100', // End when section top is near top (adjusted for navbar)
-        scrub: 0.5,
+        scrub: true,
         invalidateOnRefresh: true
       }
     });
@@ -329,27 +331,38 @@ export class Projects implements AfterViewInit, OnDestroy {
       const scaledWidth = width * scale;
       const margin = 48;
       const centerX = Math.min(window.innerWidth - scaledWidth / 2 - margin, window.innerWidth - 180);
+      const contactCard = document.getElementById('contact-card');
+      const contactAnchor = contactCard ?? document.getElementById('contact');
       let centerY = window.innerHeight / 2;
-      const contactSection = document.getElementById('contact');
-      if (contactSection) {
-        const rect = contactSection.getBoundingClientRect();
+      if (contactAnchor) {
+        const rect = contactAnchor.getBoundingClientRect();
         centerY = rect.top + rect.height / 2;
-        centerY = Math.min(Math.max(centerY, window.innerHeight * 0.35), window.innerHeight * 0.65);
       }
+      const upperBound = window.innerHeight * 0.35;
+      const lowerBound = window.innerHeight * 0.65;
+      centerY = Math.min(Math.max(centerY, upperBound), lowerBound);
       return { centerX, centerY, scale };
     }
 
     const mobileScale = this.config.BLOB_SCALE * 0.62;
     let centerY = window.innerHeight - 120;
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      const rect = contactSection.getBoundingClientRect();
-      centerY = Math.min(rect.bottom - 60, window.innerHeight - 80);
+    const mobileAnchor = document.getElementById('contact-card') ?? document.getElementById('contact');
+    if (mobileAnchor) {
+      const rect = mobileAnchor.getBoundingClientRect();
+      centerY = Math.min(rect.bottom + 20, window.innerHeight - 80);
     }
     return {
       centerX: window.innerWidth / 2,
       centerY,
       scale: mobileScale,
+    };
+  }
+
+  private getSkillsBlobTarget(): { centerX: number; centerY: number; scale: number } {
+    return {
+      centerX: window.innerWidth / 2,
+      centerY: this.config.getAdjustedCenterY(),
+      scale: this.config.BLOB_SCALE,
     };
   }
 
@@ -371,8 +384,8 @@ export class Projects implements AfterViewInit, OnDestroy {
     this.stopContactFloat();
     const baseY = this.lastBlobPosition.y;
     this.contactFloatTween = gsap.to(this.blobRef.nativeElement, {
-      y: baseY + 20,
-      duration: 2.2,
+      y: baseY + 12,
+      duration: 2.6,
       repeat: -1,
       yoyo: true,
       ease: 'sine.inOut',
@@ -401,6 +414,25 @@ export class Projects implements AfterViewInit, OnDestroy {
       end: 'bottom center',
       onEnter: () => this.moveBlobToContactState(),
       onLeaveBack: () => this.moveBlobToProjectsState(),
+    });
+  }
+
+  private handleSkillsBlobTakeover(): void {
+    if (!this.blobRef?.nativeElement) return;
+    const blob = this.blobRef.nativeElement;
+    const { centerX, centerY, scale } = this.getSkillsBlobTarget();
+    const { width, height } = this.getBlobDimensions();
+    const x = centerX - width / 2;
+    const y = centerY - height / 2;
+    this.stopContactFloat();
+    this.lastBlobPosition = { x, y };
+    gsap.to(blob, {
+      x,
+      y,
+      scale,
+      opacity: 0,
+      duration: 0.65,
+      ease: 'power2.inOut',
     });
   }
 
@@ -446,5 +478,6 @@ export class Projects implements AfterViewInit, OnDestroy {
     this.contactFloatTween?.kill();
     document.removeEventListener('skills-blob-finished', this.onSkillsBlobFinished);
     document.removeEventListener('skills-blob-reset', this.onSkillsBlobReset);
+    document.removeEventListener('skills-blob-takeover', this.onSkillsBlobTakeover);
   }
 }
