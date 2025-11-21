@@ -99,12 +99,47 @@ export class BlobAnimationConfigService {
   private initialBlobDimensions: { width: number; height: number } | null = null;
 
   /**
+   * Calcula las dimensiones esperadas del blob basándose en las reglas CSS
+   * Esto permite obtener dimensiones determinísticas sin esperar a que la imagen cargue
+   */
+  calculateExpectedBlobDimensions(): { width: number; height: number } {
+    const vw = Math.max(window.innerWidth, 320); // Evitar 0
+    const isMobile = vw < 640;
+    
+    let width: number;
+    
+    // Reglas CSS replicadas:
+    // Mobile: w-[85vw] max-w-[900px]
+    // Desktop (sm+): w-[65vw] max-w-[700px]
+    
+    if (isMobile) {
+      width = Math.min(vw * 0.85, 900);
+    } else {
+      width = Math.min(vw * 0.65, 700);
+    }
+    
+    // Aspect ratio original: 1536 / 1024 = 1.5
+    const aspectRatio = this.ORIGINAL_BLOB_WIDTH / this.ORIGINAL_BLOB_HEIGHT;
+    const height = width / aspectRatio;
+    
+    return { width, height };
+  }
+
+  /**
    * Establece las dimensiones iniciales del blob desde el DOM
    * Debe ser llamado desde el componente About después de que el blob se haya renderizado
    */
   setInitialBlobDimensions(width: number, height: number): void {
-    this.initialBlobDimensions = { width, height };
-    console.log('initial dimentions', this.initialBlobDimensions);
+    // Validar que las dimensiones sean válidas y mayores a 0
+    if (width > 0 && height > 0) {
+      this.initialBlobDimensions = { width, height };
+      console.log('initial dimentions set from DOM:', this.initialBlobDimensions);
+    } else {
+      // Si vienen dimensiones inválidas, intentar calcularlas determinísticamente
+      const calculated = this.calculateExpectedBlobDimensions();
+      this.initialBlobDimensions = calculated;
+      console.warn('Invalid DOM dimensions received, using calculated fallback:', width, height, '->', calculated);
+    }
   }
 
   /**
@@ -112,14 +147,14 @@ export class BlobAnimationConfigService {
    * sin salirse del viewport (considerando navbar y margen)
    */
   get BLOB_SCALE(): number {
-    // Si no se han establecido las dimensiones iniciales, retornar un valor por defecto
-    if (!this.initialBlobDimensions) {
-      return 1.4; // Fallback al valor anterior
+    // Si no se han establecido las dimensiones iniciales, intentar calcularlas
+    if (!this.initialBlobDimensions || this.initialBlobDimensions.width <= 0 || this.initialBlobDimensions.height <= 0) {
+      this.initialBlobDimensions = this.calculateExpectedBlobDimensions();
     }
 
     const navbarHeight = this.getNavbarHeight();
-    const availableWidth = window.innerWidth - (this.BLOB_MARGIN * 2);
-    const availableHeight = window.innerHeight - navbarHeight - (this.BLOB_MARGIN * 2);
+    const availableWidth = Math.max(window.innerWidth - (this.BLOB_MARGIN * 2), 100); // Mínimo 100px
+    const availableHeight = Math.max(window.innerHeight - navbarHeight - (this.BLOB_MARGIN * 2), 100); // Mínimo 100px
 
     const isMobile = window.innerWidth < 640;
 
@@ -142,14 +177,21 @@ export class BlobAnimationConfigService {
       visualHeight = initialBlobHeight;
     }
 
+    // Evitar división por cero
+    if (visualWidth <= 0 || visualHeight <= 0) return 1.4;
+
     // Calcular el scale multiplicador necesario para cada dimensión
     const scaleByWidth = availableWidth / visualWidth;
     const scaleByHeight = availableHeight / visualHeight;
 
     // Usar el menor de los dos para asegurar que cabe en ambas dimensiones
     // con exactamente BLOB_MARGIN px de margen en los lados que tocan
-    console.log('scale: ', Math.min(scaleByWidth, scaleByHeight));
-    return Math.min(scaleByWidth, scaleByHeight);
+    const scale = Math.min(scaleByWidth, scaleByHeight);
+    
+    // Validar que el scale sea razonable (no 0, no infinito)
+    if (!isFinite(scale) || scale <= 0) return 1.4;
+    
+    return scale;
   }
 
   // ==========================================
@@ -212,7 +254,7 @@ export class BlobAnimationConfigService {
    */
   getFinalBlobWidth(isMobile: boolean): number {
     if (!this.initialBlobDimensions) {
-      return 0; // Fallback si no se han establecido dimensiones
+      this.initialBlobDimensions = this.calculateExpectedBlobDimensions();
     }
 
     // En mobile rotado 90°, el ancho visual es la altura inicial
@@ -264,7 +306,7 @@ export class BlobAnimationConfigService {
    */
   getBlobScale(isMobile: boolean): number {
     if (!this.initialBlobDimensions) {
-      return 1; // Fallback
+      this.initialBlobDimensions = this.calculateExpectedBlobDimensions();
     }
 
     // Replicar la lógica original: ancho inicial del blob * BLOB_SCALE / dimensión original

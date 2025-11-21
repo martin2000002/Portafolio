@@ -24,6 +24,7 @@ export class About implements AfterViewInit, OnDestroy {
   readonly LINKS = LINKS;
 
   @ViewChild('leadRef', { static: false }) leadRef!: ElementRef<HTMLElement>;
+  @ViewChild('sectionRef', { static: false }) sectionRef!: ElementRef<HTMLElement>;
   @ViewChild('titleRef', { static: false }) titleRef!: ElementRef<HTMLElement>;
   @ViewChild('subtitleRef', { static: false }) subtitleRef!: ElementRef<HTMLElement>;
   @ViewChild('jelliesRef', { static: false }) jelliesRef!: ElementRef<HTMLDivElement>;
@@ -186,7 +187,8 @@ export class About implements AfterViewInit, OnDestroy {
     if (!img) return;
 
     // Establecer las dimensiones iniciales del blob en el servicio
-    // Esto se hace cada vez que se actualiza la posición (resize, load, etc.)
+    // Usar offsetWidth/Height si están disponibles y son válidos
+    // El servicio se encargará de usar fallback determinístico si son 0
     this.config.setInitialBlobDimensions(img.offsetWidth, img.offsetHeight);
 
     // Matar el ScrollTrigger y limpiar TODAS las propiedades GSAP previas
@@ -250,7 +252,7 @@ export class About implements AfterViewInit, OnDestroy {
       ease: 'none',
       force3D: true,
       scrollTrigger: {
-        trigger: isMobile ? img : 'section',
+        trigger: isMobile ? img : this.sectionRef?.nativeElement ?? img,
         start: scrollTriggerStart,
         end: `+=${this.config.CENTERING_DURATION}`,
         scrub: true,
@@ -276,9 +278,10 @@ export class About implements AfterViewInit, OnDestroy {
     const viewportCenterX = window.innerWidth / 2;
     const viewportCenterY = this.config.getAdjustedCenterY();
     const isMobile = this.config.isMobile();
+    const aboutSection = this.sectionRef?.nativeElement;
 
     this.imageChangeScrollTrigger = ScrollTrigger.create({
-      trigger: 'section',
+      trigger: aboutSection ?? img,
       start: `top top-=${this.config.CENTERING_END}`, // Empieza DESPUÉS de que la animación termine
       end: `top top-=${this.config.SEQUENCE_END}`, // Scroll total para todas las imágenes
       scrub: true,
@@ -306,6 +309,24 @@ export class About implements AfterViewInit, OnDestroy {
         }
       }
     });
+
+    // Ajustar estado inicial de la imagen y posición por si cargamos en medio
+    const st = this.imageChangeScrollTrigger;
+    if (st) {
+      st.refresh();
+      const progress = st.progress;
+      const imageIndex = Math.floor(progress * this.config.TOTAL_IMAGES) + 1;
+      const clampedIndex = Math.min(Math.max(imageIndex, 1), this.config.TOTAL_IMAGES);
+      const imageNumber = String(clampedIndex).padStart(2, '0');
+      img.src = `assets/3d_shape/${imageNumber}.webp`;
+      gsap.set(img, {
+        x: viewportCenterX - (img.offsetWidth / 2),
+        y: viewportCenterY - (img.offsetHeight / 2),
+        scale: this.config.BLOB_SCALE,
+        rotation: this.config.getFinalRotation(isMobile),
+        force3D: true,
+      });
+    }
   }
 
   private setupBlobFade(): void {
@@ -317,24 +338,47 @@ export class About implements AfterViewInit, OnDestroy {
       this.blobFadeScrollTrigger = undefined;
     }
 
-    // Buscar la sección de Skills para ocultar el blob cuando llegue
-    const skillsSection = document.querySelector('app-skills section');
-    if (!skillsSection) return;
+    // Función para intentar configurar el trigger
+    const trySetup = (attempts = 0) => {
+      // Buscar la sección de Skills
+      const skillsSection = document.querySelector('app-skills section');
+      
+      if (!skillsSection) {
+        // Si no se encuentra y no hemos excedido los intentos (2 segundos aprox), reintentar
+        if (attempts < 20) {
+          requestAnimationFrame(() => trySetup(attempts + 1));
+        }
+        return;
+      }
 
-    this.blobFadeScrollTrigger = ScrollTrigger.create({
-      trigger: skillsSection,
-      start: 'top center',
-      end: 'top center',
-      markers: false,
-      onEnter: () => {
-        // Ocultar el blob instantáneamente cuando la sección Skills llega al centro
-        gsap.set(img, { opacity: 0 });
-      },
-      onLeaveBack: () => {
-        // Mostrar el blob instantáneamente cuando se hace scroll hacia atrás
-        gsap.set(img, { opacity: 1 });
-      },
-    });
+      this.blobFadeScrollTrigger = ScrollTrigger.create({
+        trigger: skillsSection,
+        start: 'top center',
+        end: 'bottom center',
+        markers: false,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          // Si el trigger está activo (skills entre start y end) O ya pasamos (progress > 0), ocultar blob
+          // Esto asegura que si estamos más abajo de skills, el blob siga oculto
+          const shouldHide = self.isActive || self.progress > 0;
+          gsap.set(img, { opacity: shouldHide ? 0 : 1 });
+        },
+        onRefresh: (self) => {
+          // Forzar actualización al refrescar (resize)
+          const shouldHide = self.isActive || self.progress > 0;
+          gsap.set(img, { opacity: shouldHide ? 0 : 1 });
+        }
+      });
+
+      // Establecer estado inicial determinístico
+      const skillsRect = skillsSection.getBoundingClientRect();
+      const centerY = window.innerHeight / 2;
+      // Si el top de skills está por encima o en el centro, ocultar
+      const isPastStart = skillsRect.top <= centerY;
+      gsap.set(img, { opacity: isPastStart ? 0 : 1 });
+    };
+
+    trySetup();
   }
 
   ngOnDestroy(): void {
@@ -349,6 +393,11 @@ export class About implements AfterViewInit, OnDestroy {
     }
     if (this.ro) {
       this.ro.disconnect();
+    }
+    const img = this.shapeRef?.nativeElement;
+    if (img) {
+      gsap.killTweensOf(img);
+      gsap.set(img, { clearProps: 'all' });
     }
   }
 }

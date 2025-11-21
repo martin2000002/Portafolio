@@ -71,6 +71,7 @@ export class Skills implements AfterViewInit, OnDestroy {
   private phase2ScrollTrigger?: ScrollTrigger; // Fase 2: Todo quieto (punto de anclaje)
   private phase3ScrollTrigger?: ScrollTrigger; // Fase 3: Skills desaparece, bubbles se distribuyen
   private skillInfoScrollTrigger?: ScrollTrigger;
+  private interactionCleanups: Array<() => void> = [];
 
   // Señal para el skill seleccionado
   selectedSkill = signal<SkillData>({
@@ -180,16 +181,7 @@ export class Skills implements AfterViewInit, OnDestroy {
         iconInitialX: 0,
         iconInitialY: 0,
         iconScale: 1.3,
-      },
-      skill_mobile: {
-        name: 'SQL Server',
-        description:
-          'Diseño y administración de bases de datos relacionales. Optimización de consultas, stored procedures y manejo de transacciones.',
-        icon: 'assets/skills/icons/sqlserver.webp',
-        iconInitialX: 0,
-        iconInitialY: 0,
-        iconScale: 1.4,
-      },
+      }
     },
     {
       id: '1_4',
@@ -433,6 +425,7 @@ export class Skills implements AfterViewInit, OnDestroy {
       this.setupPhase1Animation();
       this.setupPhase2Animation();
       this.setupPhase3Animation();
+      this.clearInteractionListeners();
       this.setupBubbleInteractions();
     };
 
@@ -444,19 +437,27 @@ export class Skills implements AfterViewInit, OnDestroy {
     setTimeout(() => waitForBlobDimensions(), 100);
   }
 
+  private resizeTimeout: any;
+
   onResize(): void {
-    // Recalcular posiciones de bubbles con las nuevas dimensiones del viewport
-    this.calculateBubblePositions();
+    // Debounce para evitar cálculos excesivos durante el resize
+    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+    
+    this.resizeTimeout = setTimeout(() => {
+      // Recalcular posiciones de bubbles con las nuevas dimensiones del viewport
+      this.calculateBubblePositions();
 
-    // Recrear todas las animaciones con las nuevas dimensiones
-    this.setupBubblesAnimation();
-    this.setupPhase1Animation();
-    this.setupPhase2Animation();
-    this.setupPhase3Animation();
-    this.setupBubbleInteractions();
+      // Recrear todas las animaciones con las nuevas dimensiones
+      this.setupBubblesAnimation();
+      this.setupPhase1Animation();
+      this.setupPhase2Animation();
+      this.setupPhase3Animation();
+      this.clearInteractionListeners();
+      this.setupBubbleInteractions();
 
-    // Refresh de ScrollTrigger para recalcular posiciones
-    ScrollTrigger.refresh();
+      // Refresh de ScrollTrigger para recalcular posiciones
+      ScrollTrigger.refresh();
+    }, 100);
   }
 
   private getNavbarHeight(): number {
@@ -468,20 +469,16 @@ export class Skills implements AfterViewInit, OnDestroy {
   }
 
   private calculateBubblePositions(): void {
-    // Si no hay dimensiones iniciales del blob, intentar obtenerlas ahora
-    // Esto hace que el cálculo sea determinístico e independiente del scroll
+    // Asegurar que tenemos dimensiones iniciales válidas en el servicio
+    // Si no están seteadas (ej: refresh directo en skills), el servicio las calculará determinísticamente
     if (!(this.config as any)['initialBlobDimensions']) {
-      const isMobile = this.config.isMobile();
-      // Intentar obtener el blob del DOM de About
+      // Intentar obtener del DOM por si acaso está disponible
       const aboutBlob = document.querySelector('[alt="3D blob"]') as HTMLImageElement;
-      if (aboutBlob && aboutBlob.offsetWidth > 0) {
+      if (aboutBlob && aboutBlob.offsetWidth > 0 && aboutBlob.offsetHeight > 0) {
         this.config.setInitialBlobDimensions(aboutBlob.offsetWidth, aboutBlob.offsetHeight);
       } else {
-        // Fallback: calcular dimensiones basadas en viewport usando el mismo cálculo que About
-        const width = isMobile ? window.innerWidth * 0.85 : window.innerWidth * 0.65;
-        // Mantener aspect ratio: height = width * (ORIGINAL_HEIGHT / ORIGINAL_WIDTH)
-        const height = width * (this.config.ORIGINAL_BLOB_HEIGHT / this.config.ORIGINAL_BLOB_WIDTH);
-        this.config.setInitialBlobDimensions(width, height);
+        // Si no, forzar cálculo determinístico
+        this.config.calculateExpectedBlobDimensions();
       }
     }
 
@@ -490,7 +487,13 @@ export class Skills implements AfterViewInit, OnDestroy {
     const finalBlobWidth = this.config.getFinalBlobWidth(isMobile);
 
     // Calcular el factor de escala basado en el ancho final del blob vs el original
-    const scale = this.config.getBlobScale(isMobile);
+    let scale = this.config.getBlobScale(isMobile);
+    
+    // Validar que scale sea válido
+    if (scale <= 0 || !isFinite(scale)) {
+      console.warn('Invalid scale calculated:', scale, 'Using fallback 1.0');
+      scale = 1.0;
+    }
 
     // Calcular el centro donde debe estar el blob
     const centerX = window.innerWidth / 2;
@@ -510,8 +513,9 @@ export class Skills implements AfterViewInit, OnDestroy {
     // Calcular posición y tamaño de cada burbuja
     this.bubbles.forEach((bubble) => {
       // Escalar dimensiones manteniendo aspect ratio
-      bubble.width = bubble.originalWidth * scale;
-      bubble.height = bubble.originalHeight * scale;
+      // Asegurar mínimo 1px para evitar problemas de renderizado
+      bubble.width = Math.max(bubble.originalWidth * scale, 1);
+      bubble.height = Math.max(bubble.originalHeight * scale, 1);
 
       // Escalar posiciones relativas
       let scaledX = bubble.originalX * scale;
@@ -850,6 +854,15 @@ export class Skills implements AfterViewInit, OnDestroy {
           });
         }
       },
+      onRefresh: (self) => {
+        // Forzar actualización del texto al refrescar
+        if (skillInfo) {
+          const textProgress = Math.max(0, (self.progress - 0.6) / 0.4);
+          gsap.set(skillInfo, {
+            opacity: textProgress,
+          });
+        }
+      }
     });
   }
 
@@ -965,6 +978,26 @@ export class Skills implements AfterViewInit, OnDestroy {
         }
       },
     });
+
+    // Estado inicial determinístico según scroll actual
+    const sectionTop = section.getBoundingClientRect().top;
+    const centerY = window.innerHeight / 2;
+    // Si estamos más abajo del punto de inicio (top <= center), deben ser visibles
+    const isPastStart = sectionTop <= centerY;
+    
+    gsap.set(title, { opacity: isPastStart ? 1 : 0 });
+    this.bubbleImgs.forEach((ref) => {
+      gsap.set(ref.nativeElement, { opacity: isPastStart ? 1 : 0 });
+    });
+    
+    // Los iconos se manejan en Phase 1/2, así que inicialmente ocultos si no estamos en esas fases
+    // Pero si estamos en Phase 2/3, deberían ser visibles.
+    // Dejamos que Phase 1/2/3 manejen la opacidad de los iconos, aquí solo inicializamos a 0 si no estamos visibles
+    if (!isPastStart && this.bubbleIcons) {
+      this.bubbleIcons.forEach((iconRef) => {
+        gsap.set(iconRef.nativeElement, { opacity: 0 });
+      });
+    }
   }
 
 
@@ -1009,16 +1042,17 @@ export class Skills implements AfterViewInit, OnDestroy {
           ease: 'power2.out',
         });
 
-        container.addEventListener('mouseenter', () => {
-          hoverTimeline.play();
-        });
-
-        container.addEventListener('mouseleave', () => {
-          hoverTimeline.reverse();
+        const onEnter = () => hoverTimeline.play();
+        const onLeave = () => hoverTimeline.reverse();
+        container.addEventListener('mouseenter', onEnter);
+        container.addEventListener('mouseleave', onLeave);
+        this.interactionCleanups.push(() => {
+          container.removeEventListener('mouseenter', onEnter);
+          container.removeEventListener('mouseleave', onLeave);
         });
 
         // Click para cambiar el skill seleccionado
-        container.addEventListener('click', () => {
+        const onClick = () => {
           this.selectedSkill.set(skill);
 
           // Animación de "pulso" suave al hacer click
@@ -1034,6 +1068,10 @@ export class Skills implements AfterViewInit, OnDestroy {
               duration: 0.35,
               ease: 'back.out(1.4)',
             });
+        };
+        container.addEventListener('click', onClick);
+        this.interactionCleanups.push(() => {
+          container.removeEventListener('click', onClick);
         });
       }
     });
@@ -1064,6 +1102,7 @@ export class Skills implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearInteractionListeners();
     if (this.titleScrollTrigger) {
       this.titleScrollTrigger.kill();
     }
@@ -1081,6 +1120,15 @@ export class Skills implements AfterViewInit, OnDestroy {
     }
     if (this.skillInfoScrollTrigger) {
       this.skillInfoScrollTrigger.kill();
+    }
+  }
+
+  private clearInteractionListeners(): void {
+    if (this.interactionCleanups.length) {
+      this.interactionCleanups.forEach((fn) => {
+        try { fn(); } catch {}
+      });
+      this.interactionCleanups = [];
     }
   }
 }
