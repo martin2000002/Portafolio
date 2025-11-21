@@ -296,4 +296,63 @@ export class BlobAnimationConfigService {
   getFinalRotation(isMobile: boolean): number {
     return isMobile ? this.MOBILE_FINAL_ROTATION : this.DESKTOP_FINAL_ROTATION;
   }
+
+  /**
+   * Determina si el dispositivo es mobile basado en el ancho del viewport
+   * Centraliza el breakpoint de 640px que se usa en toda la aplicación
+   */
+  isMobile(): boolean {
+    return window.innerWidth < 640;
+  }
+
+  /**
+   * Calcula las posiciones y dimensiones comunes para las animaciones de Skills
+   * Este método centraliza todos los cálculos que se repiten en Phase 1, 2 y 3
+   *
+   * Retorna un objeto con todas las propiedades necesarias para posicionar:
+   * - El título "Skills"
+   * - Las bubbles en sus diferentes fases de animación
+   */
+  getSkillsLayoutConfig(isMobile: boolean): {
+    navbarHeight: number;
+    titleHeight: number;
+    titleMargin: number;
+    titleFinalY: number;
+    availableHeight: number;
+    bubblesAreaHeight: number;
+    totalContentHeight: number;
+    verticalOffset: number;
+    bubblesTopY: number;
+  } {
+    const navbarHeight = this.getNavbarHeight();
+    const titleMargin = 10;
+    const availableHeight = window.innerHeight - navbarHeight;
+    const titleHeight = isMobile ? 80 : 150;
+
+    // Posición final del título: navbar bottom + 10px
+    // La posición Y es relativa al centro del viewport (por el flex items-center)
+    // Necesitamos posicionar el CENTRO del título, no el top
+    const titleFinalY = -(window.innerHeight / 2) + navbarHeight + titleMargin + (titleHeight / 2);
+
+    // Desktop: centrar grupo de bubbles verticalmente
+    // Mobile: distribuir bubbles verticalmente en el espacio
+    const bubblesAreaHeight = isMobile ? availableHeight * 0.6 : 300;
+    const totalContentHeight = titleHeight + bubblesAreaHeight + 40; // 40px de spacing
+
+    // Calcular posición inicial de bubbles para centrar todo
+    const verticalOffset = Math.max(0, (availableHeight - totalContentHeight) / 2);
+    const bubblesTopY = navbarHeight + titleMargin + titleHeight + 40 + verticalOffset;
+
+    return {
+      navbarHeight,
+      titleHeight,
+      titleMargin,
+      titleFinalY,
+      availableHeight,
+      bubblesAreaHeight,
+      totalContentHeight,
+      verticalOffset,
+      bubblesTopY,
+    };
+  }
 }

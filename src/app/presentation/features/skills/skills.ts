@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  HostListener,
   OnDestroy,
   QueryList,
   ViewChild,
@@ -55,6 +54,7 @@ interface Bubble extends BubbleConfig {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'block',
+    '(window:resize)': 'onResize()'
   },
 })
 export class Skills implements AfterViewInit, OnDestroy {
@@ -89,13 +89,13 @@ export class Skills implements AfterViewInit, OnDestroy {
 
   // Helper público para usar en el template - usa el ancho actual de la ventana
   hasSkill(bubble: Bubble): boolean {
-    const isMobile = window.innerWidth < 640;
+    const isMobile = this.config.isMobile();
     return !!this.getSkill(bubble, isMobile);
   }
 
   // Helper público para obtener el skill en el template
   getSkillForBubble(bubble: Bubble): SkillData | undefined {
-    const isMobile = window.innerWidth < 640;
+    const isMobile = this.config.isMobile();
     return this.getSkill(bubble, isMobile);
   }
 
@@ -444,13 +444,19 @@ export class Skills implements AfterViewInit, OnDestroy {
     setTimeout(() => waitForBlobDimensions(), 100);
   }
 
-  @HostListener('window:resize')
   onResize(): void {
+    // Recalcular posiciones de bubbles con las nuevas dimensiones del viewport
     this.calculateBubblePositions();
+
+    // Recrear todas las animaciones con las nuevas dimensiones
     this.setupBubblesAnimation();
     this.setupPhase1Animation();
     this.setupPhase2Animation();
     this.setupPhase3Animation();
+    this.setupBubbleInteractions();
+
+    // Refresh de ScrollTrigger para recalcular posiciones
+    ScrollTrigger.refresh();
   }
 
   private getNavbarHeight(): number {
@@ -462,8 +468,25 @@ export class Skills implements AfterViewInit, OnDestroy {
   }
 
   private calculateBubblePositions(): void {
+    // Si no hay dimensiones iniciales del blob, intentar obtenerlas ahora
+    // Esto hace que el cálculo sea determinístico e independiente del scroll
+    if (!(this.config as any)['initialBlobDimensions']) {
+      const isMobile = this.config.isMobile();
+      // Intentar obtener el blob del DOM de About
+      const aboutBlob = document.querySelector('[alt="3D blob"]') as HTMLImageElement;
+      if (aboutBlob && aboutBlob.offsetWidth > 0) {
+        this.config.setInitialBlobDimensions(aboutBlob.offsetWidth, aboutBlob.offsetHeight);
+      } else {
+        // Fallback: calcular dimensiones basadas en viewport usando el mismo cálculo que About
+        const width = isMobile ? window.innerWidth * 0.85 : window.innerWidth * 0.65;
+        // Mantener aspect ratio: height = width * (ORIGINAL_HEIGHT / ORIGINAL_WIDTH)
+        const height = width * (this.config.ORIGINAL_BLOB_HEIGHT / this.config.ORIGINAL_BLOB_WIDTH);
+        this.config.setInitialBlobDimensions(width, height);
+      }
+    }
+
     // Obtener las dimensiones finales del blob en About
-    const isMobile = window.innerWidth < 640;
+    const isMobile = this.config.isMobile();
     const finalBlobWidth = this.config.getFinalBlobWidth(isMobile);
 
     // Calcular el factor de escala basado en el ancho final del blob vs el original
@@ -538,27 +561,8 @@ export class Skills implements AfterViewInit, OnDestroy {
       this.phase1ScrollTrigger = undefined;
     }
 
-    const navbarHeight = this.getNavbarHeight();
-    const isMobile = window.innerWidth < 640;
-    const titleMargin = 10;
-
-    // Espacio disponible para centrar el contenido
-    const availableHeight = window.innerHeight - navbarHeight;
-    const titleHeight = isMobile ? 80 : 150;
-
-    // Posición final del título: navbar bottom + 10px
-    // La posición Y es relativa al centro del viewport (por el flex items-center)
-    // Necesitamos posicionar el CENTRO del título, no el top
-    const titleFinalY = -(window.innerHeight / 2) + navbarHeight + titleMargin + (titleHeight / 2);
-
-    // Desktop: centrar grupo de bubbles verticalmente
-    // Mobile: distribuir bubbles verticalmente en el espacio
-    const bubblesAreaHeight = isMobile ? availableHeight * 0.6 : 300;
-    const totalContentHeight = titleHeight + bubblesAreaHeight + 40; // 40px de spacing
-
-    // Calcular posición inicial de bubbles para centrar todo
-    const verticalOffset = Math.max(0, (availableHeight - totalContentHeight) / 2);
-    const bubblesTopY = navbarHeight + titleMargin + titleHeight + 40 + verticalOffset;
+    const isMobile = this.config.isMobile();
+    const layout = this.config.getSkillsLayoutConfig(isMobile);
 
     this.phase1ScrollTrigger = ScrollTrigger.create({
       trigger: section,
@@ -566,10 +570,11 @@ export class Skills implements AfterViewInit, OnDestroy {
       end: `+=${isMobile ? 500 : 700}`,
       scrub: true,
       markers: false,
+      invalidateOnRefresh: true,
       onUpdate: (self) => {
         // 1. Título sube desde bottom hasta navbar bottom + 10px
         const startY = window.innerHeight / 2;
-        const currentTitleY = startY - (self.progress * (startY - titleFinalY));
+        const currentTitleY = startY - (self.progress * (startY - layout.titleFinalY));
 
         gsap.set(title, {
           y: currentTitleY,
@@ -593,7 +598,7 @@ export class Skills implements AfterViewInit, OnDestroy {
               const minY = Math.min(...allSkillBubbles.map(b => b.y));
               const maxY = Math.max(...allSkillBubbles.map(b => b.y + b.height));
               const currentCenterY = (minY + maxY) / 2;
-              const targetCenterY = bubblesTopY + bubblesAreaHeight / 2;
+              const targetCenterY = layout.bubblesTopY + layout.bubblesAreaHeight / 2;
               const groupOffset = targetCenterY - currentCenterY;
               const targetY = bubble.y + groupOffset;
 
@@ -644,18 +649,8 @@ export class Skills implements AfterViewInit, OnDestroy {
       this.phase2ScrollTrigger = undefined;
     }
 
-    const navbarHeight = this.getNavbarHeight();
-    const isMobile = window.innerWidth < 640;
-    const titleMargin = 10;
-
-    // Mismas posiciones que en Fase 1
-    const availableHeight = window.innerHeight - navbarHeight;
-    const titleHeight = isMobile ? 80 : 150;
-    const titleFinalY = -(window.innerHeight / 2) + navbarHeight + titleMargin + (titleHeight / 2);
-    const bubblesAreaHeight = isMobile ? availableHeight * 0.6 : 300;
-    const totalContentHeight = titleHeight + bubblesAreaHeight + 40;
-    const verticalOffset = Math.max(0, (availableHeight - totalContentHeight) / 2);
-    const bubblesTopY = navbarHeight + titleMargin + titleHeight + 40 + verticalOffset;
+    const isMobile = this.config.isMobile();
+    const layout = this.config.getSkillsLayoutConfig(isMobile);
 
     this.phase2ScrollTrigger = ScrollTrigger.create({
       trigger: section,
@@ -664,10 +659,11 @@ export class Skills implements AfterViewInit, OnDestroy {
       scrub: true,
       markers: false,
       id: 'skills-anchor',
+      invalidateOnRefresh: true,
       onUpdate: () => {
         // Mantener título en su posición
         gsap.set(title, {
-          y: titleFinalY,
+          y: layout.titleFinalY,
           opacity: 1,
         });
 
@@ -687,7 +683,7 @@ export class Skills implements AfterViewInit, OnDestroy {
               const minY = Math.min(...allSkillBubbles.map(b => b.y));
               const maxY = Math.max(...allSkillBubbles.map(b => b.y + b.height));
               const currentCenterY = (minY + maxY) / 2;
-              const targetCenterY = bubblesTopY + bubblesAreaHeight / 2;
+              const targetCenterY = layout.bubblesTopY + layout.bubblesAreaHeight / 2;
               const groupOffset = targetCenterY - currentCenterY;
               const targetY = bubble.y + groupOffset;
 
@@ -728,20 +724,10 @@ export class Skills implements AfterViewInit, OnDestroy {
       this.phase3ScrollTrigger = undefined;
     }
 
-    const navbarHeight = this.getNavbarHeight();
-    const isMobile = window.innerWidth < 640;
+    const isMobile = this.config.isMobile();
+    const layout = this.config.getSkillsLayoutConfig(isMobile);
     const availableWidth = window.innerWidth;
-    const availableHeight = window.innerHeight - navbarHeight;
-
-    const titleMargin = 10;
-
-    // Mismas posiciones que en Fase 2
-    const titleHeight = isMobile ? 80 : 150;
-    const titleFinalY = -(window.innerHeight / 2) + navbarHeight + titleMargin + (titleHeight / 2);
-    const bubblesAreaHeight = isMobile ? availableHeight * 0.6 : 300;
-    const totalContentHeight = titleHeight + bubblesAreaHeight + 40;
-    const verticalOffset = Math.max(0, (availableHeight - totalContentHeight) / 2);
-    const bubblesTopY = navbarHeight + titleMargin + titleHeight + 40 + verticalOffset;
+    const availableHeight = window.innerHeight - layout.navbarHeight;
 
     const desktopPositions = [
       { x: 0.18, y: 0.20 }, { x: 0.42, y: 0.08 }, { x: 0.82, y: 0.18 }, { x: 0.75, y: 0.40 },
@@ -754,10 +740,12 @@ export class Skills implements AfterViewInit, OnDestroy {
       end: `+=${isMobile ? 800 : 1000}`,
       scrub: true,
       markers: false,
+      invalidateOnRefresh: true,
       onUpdate: (self) => {
         // 1. Skills sube hacia arriba (sin fade, solo movimiento)
-        const titleDisappearY = titleFinalY - 200;
-        const currentTitleY = titleFinalY - (self.progress * Math.abs(titleFinalY - titleDisappearY));
+        // Aumentar el offset para asegurar que el título desaparezca completamente
+        const titleDisappearY = layout.titleFinalY - (layout.titleHeight + 100);
+        const currentTitleY = layout.titleFinalY - (self.progress * Math.abs(layout.titleFinalY - titleDisappearY));
 
         gsap.set(title, {
           y: currentTitleY,
@@ -779,7 +767,7 @@ export class Skills implements AfterViewInit, OnDestroy {
               const minY = Math.min(...allSkillBubbles.map(b => b.y));
               const maxY = Math.max(...allSkillBubbles.map(b => b.y + b.height));
               const currentCenterY = (minY + maxY) / 2;
-              const targetCenterY = bubblesTopY + bubblesAreaHeight / 2;
+              const targetCenterY = layout.bubblesTopY + layout.bubblesAreaHeight / 2;
               const groupOffset = targetCenterY - currentCenterY;
               const startY = bubble.y + groupOffset;
 
@@ -801,7 +789,7 @@ export class Skills implements AfterViewInit, OnDestroy {
                 const margin = 20;
 
                 // La mitad inferior comienza a la mitad de la pantalla
-                const lowerHalfStart = navbarHeight + (availableHeight / 2);
+                const lowerHalfStart = layout.navbarHeight + (availableHeight / 2);
                 const lowerHalfHeight = availableHeight / 2;
 
                 const finalX = margin + mobilePos.x * (availableWidth - margin * 2 - bubble.width);
@@ -823,7 +811,7 @@ export class Skills implements AfterViewInit, OnDestroy {
                 const margin = 60;
 
                 const finalX = rightHalfStart + margin + desktopPos.x * (rightHalfWidth - margin * 2);
-                const finalY = navbarHeight + margin + desktopPos.y * (availableHeight - margin * 2);
+                const finalY = layout.navbarHeight + margin + desktopPos.y * (availableHeight - margin * 2);
 
                 const moveX = (finalX - bubble.x) * self.progress;
                 const moveY = (finalY - startY) * self.progress;
@@ -876,7 +864,7 @@ export class Skills implements AfterViewInit, OnDestroy {
     }
 
     // Posicionar inicialmente todas las burbujas y sus iconos
-    const isMobile = window.innerWidth < 640;
+    const isMobile = this.config.isMobile();
 
     // Posicionar los contenedores de las bubbles PRIMERO (esto posiciona todo el conjunto)
     if (this.bubbleContainers) {
@@ -950,6 +938,7 @@ export class Skills implements AfterViewInit, OnDestroy {
       start: 'top center',
       end: 'top center',
       markers: false,
+      invalidateOnRefresh: true,
       onEnter: () => {
         // Mostrar el título instantáneamente
         gsap.set(title, { opacity: 1 });
@@ -983,7 +972,7 @@ export class Skills implements AfterViewInit, OnDestroy {
   private setupBubbleInteractions(): void {
     if (!this.bubbleContainers) return;
 
-    const isMobile = window.innerWidth < 640;
+    const isMobile = this.config.isMobile();
 
     this.bubbleContainers.forEach((containerRef, index) => {
       const container = containerRef.nativeElement;
@@ -1051,7 +1040,7 @@ export class Skills implements AfterViewInit, OnDestroy {
   }
 
   selectSkill(bubble: Bubble): void {
-    const isMobile = window.innerWidth < 640;
+    const isMobile = this.config.isMobile();
     const skill = this.getSkill(bubble, isMobile);
     if (skill) {
       this.selectedSkill.set(skill);

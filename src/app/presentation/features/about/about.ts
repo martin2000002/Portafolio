@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, QueryList, ViewChild, ViewChildren, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { LucideAngularModule, MailIcon, BookOpenIcon, GithubIcon, LinkedinIcon } from 'lucide-angular';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -12,7 +12,8 @@ import { BlobAnimationConfigService } from '../../shared/services/blob-animation
   styleUrl: './about.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'block'
+    class: 'block',
+    '(window:resize)': 'onResize()'
   }
 })
 export class About implements AfterViewInit, OnDestroy {
@@ -53,7 +54,6 @@ export class About implements AfterViewInit, OnDestroy {
     this.setupShapeScrollAnim();
   }
 
-  @HostListener('window:resize')
   onResize(): void {
     this.syncWidth();
     this.updateShapePosition();
@@ -63,8 +63,8 @@ export class About implements AfterViewInit, OnDestroy {
   }
 
   private syncWidth(): void {
-    const isMobile = window.innerWidth < 640;
-    
+    const isMobile = this.config.isMobile();
+
     let w = 0;
     if (isMobile && this.textContainer?.nativeElement) {
       w = this.textContainer.nativeElement.offsetWidth;
@@ -79,7 +79,7 @@ export class About implements AfterViewInit, OnDestroy {
         .map((el) => this.maxContentLineWidth(el));
       w = widths.length ? Math.max(...widths) : 0;
     }
-    
+
     if (w && w !== this.maxTextWidth) {
       this.maxTextWidth = w;
       this.cdr.markForCheck();
@@ -149,18 +149,6 @@ export class About implements AfterViewInit, OnDestroy {
     }
   }
 
-  private getNavbarHeight(): number {
-    return this.config.getNavbarHeight();
-  }
-
-  private getAvailableViewportHeight(): number {
-    return this.config.getAvailableViewportHeight();
-  }
-
-  private getAdjustedCenterY(): number {
-    return this.config.getAdjustedCenterY();
-  }
-
   private setupShapeScrollAnim(): void {
     const img = this.shapeRef?.nativeElement;
     if (!img) return;
@@ -210,7 +198,7 @@ export class About implements AfterViewInit, OnDestroy {
     // Limpiar completamente todas las transformaciones GSAP para empezar desde cero
     gsap.set(img, { clearProps: 'all' });
 
-    const isMobile = window.innerWidth < 640;
+    const isMobile = this.config.isMobile();
 
     const initialRotation = this.config.getInitialRotation(isMobile);
     const finalRotation = this.config.getFinalRotation(isMobile);
@@ -245,7 +233,7 @@ export class About implements AfterViewInit, OnDestroy {
     });
 
     const viewportCenterX = window.innerWidth / 2;
-    const viewportCenterY = this.getAdjustedCenterY();
+    const viewportCenterY = this.config.getAdjustedCenterY();
 
     // Crear la animación con valores absolutos
     // En mobile: inicia cuando el blob entra en viewport (top del blob toca bottom del viewport)
@@ -286,8 +274,8 @@ export class About implements AfterViewInit, OnDestroy {
 
     // Este ScrollTrigger SOLO se activa DESPUÉS de que termine la animación de centrado
     const viewportCenterX = window.innerWidth / 2;
-    const viewportCenterY = this.getAdjustedCenterY();
-    const isMobile = window.innerWidth < 640;
+    const viewportCenterY = this.config.getAdjustedCenterY();
+    const isMobile = this.config.isMobile();
 
     this.imageChangeScrollTrigger = ScrollTrigger.create({
       trigger: 'section',
