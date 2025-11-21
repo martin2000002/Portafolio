@@ -13,7 +13,7 @@
 
 			<!-- Actions sm+ -->
 			<div #jelliesRef class="hidden sm:block relative mt-10 h-[180px]" [style.width.px]="maxTextWidth">
-				<a #jelly href="#contact" class="group jelly absolute left-0 top-12">
+				<a #jelly href="#contact" (click)="onContactJellyClick($event)" class="group jelly absolute left-0 top-12">
 					<img src="assets/icons_base/contact.webp" alt="Contact" class="h-16 w-auto select-none" loading="lazy" />
 					<lucide-icon [name]="MailIcon" class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-white"></lucide-icon>
 					<span class="sr-only">Contact</span>
@@ -52,7 +52,7 @@
 			
 			<!-- Actions -sm -->
 			<div #jelliesMobileRef class="block sm:hidden relative mt-10 h-[166px] w-full max-w-[520px]" [style.width.px]="maxTextWidth">
-					<a #jelly href="#contact" class="group jelly absolute left-0 top-4">
+					<a #jelly href="#contact" (click)="onContactJellyClick($event)" class="group jelly absolute left-0 top-4">
 						<img src="assets/icons_base/contact.webp" alt="Contact" class="h-14 w-auto select-none" loading="lazy" draggable="false" oncontextmenu="return false;" />
 						<lucide-icon [name]="MailIcon" class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-white"></lucide-icon>
 						<span class="sr-only">Contact</span>

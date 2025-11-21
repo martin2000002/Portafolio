@@ -41,6 +41,11 @@ export class Navbar implements AfterViewInit, OnDestroy {
     this.theme.toggle();
   }
 
+  onLogoClick(event: Event): void {
+    event.preventDefault();
+    this.scrollToAbout();
+  }
+
   onMenuItemClick(sectionId: string): void {
     this.closeMenu();
 
@@ -51,7 +56,7 @@ export class Navbar implements AfterViewInit, OnDestroy {
       } else if (sectionId === 'projects') {
         this.scrollToProjects();
       } else if (sectionId === 'about') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.scrollToAbout();
       } else {
         // Para otras secciones, scroll normal
         const section = document.getElementById(sectionId);
@@ -60,6 +65,15 @@ export class Navbar implements AfterViewInit, OnDestroy {
         }
       }
     }, 300);
+  }
+
+  private scrollToAbout(): void {
+    const aboutSection = document.getElementById('about');
+    if (aboutSection) {
+      aboutSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   private scrollToSkillsAnchor(): void {

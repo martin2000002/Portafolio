@@ -161,6 +161,14 @@ export class About implements AfterViewInit, OnDestroy {
     this.setupBlobFade();
   }
 
+  onContactJellyClick(event: Event): void {
+    event.preventDefault();
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   private ensurePositionObservers(): void {
     const blob = this.shapeRef?.nativeElement;
     const photo = this.profileRef?.nativeElement;

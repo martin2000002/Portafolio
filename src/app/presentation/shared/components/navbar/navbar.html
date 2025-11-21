@@ -5,7 +5,7 @@
              bg-neutral-50/60 dark:bg-neutral-900/40 backdrop-blur-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]
              px-4 py-4 h-17 sm:h-18 md:h-19"
     >
-      <a href="/" class="inline-flex items-center gap-0 select-none h-full">
+      <button type="button" (click)="onLogoClick($event)" class="inline-flex items-center gap-0 select-none h-full bg-transparent border-0 p-0">
         <img
           src="assets/logo/black.webp"
           alt="MM logo"
@@ -16,7 +16,7 @@
           alt="MM logo"
           class="h-full w-auto hidden dark:block object-contain"
         />
-      </a>
+      </button>
 
       <div class="flex items-center gap-2 sm:gap-4 h-full">
         <button
