@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Project 4 - Automatización de clasificación de candidatos (Python)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <nav style="background:#000; color:#fff; padding:12px;">
+    <a href="portafolio.html" style="color:#fff; text-decoration:none;">Portafolio</a>
+    <span style="color:#b2b2b2; margin:0 8px;">|</span>
+    <a href="contacto.html" style="color:#fff; text-decoration:none;">Contacto</a>
+  </nav>
+
+  <header>
+    <h1>Automatización de clasificación de candidatos (Python)</h1>
+  </header>
+
+  <main>
+    <article>
+      <header>
+        <h2>Descripción general</h2>
+        <p>
+          Aplicación de escritorio diseñada para automatizar el flujo de preclasificación de candidatos en
+          procesos de convocatoria. Permite organizar currículums por carpetas, hacer formateo y
+          preprocesamiento (incluyendo OCR para PDFs escaneados), convertir archivos .docx a .pdf y generar
+          PDFs unificados de 10 candidatos cada uno. Además, incorpora un módulo de análisis asistido por LLM
+          para consolidar resultados y exportarlos a Excel.
+        </p>
+      </header>
+
+      <section>
+        <h3>Pantalla inicial</h3>
+        <p>
+          Desde el inicio se accede a los módulos principales: carga y organización de CVs, formateo y
+          generación de unificados, y el área de análisis. La interfaz busca reducir pasos repetitivos y
+          centralizar herramientas en un mismo lugar.
+        </p>
+        <figure>
+          <img src="resources/project_4/main.png" alt="Pantalla principal de la aplicación de escritorio" width="720">
+          <figcaption>Vista general al abrir la aplicación.</figcaption>
+        </figure>
+      </section>
+
+      <section>
+        <h3>Formateo y preparación de CVs</h3>
+        <p>
+          El módulo de formateo facilita normalizar los documentos, agregando OCR a PDFs sin texto, uniformando
+          formatos y asegurando que los CVs sean comparables. Esto mejora la calidad del análisis posterior y
+          evita errores en la extracción de información.
+        </p>
+        <figure>
+          <img src="resources/project_4/formateo.png" alt="Vista del módulo para formatear currículums" width="720">
+          <figcaption>Acción de formatear CVs para normalizarlos y habilitar OCR.</figcaption>
+        </figure>
+      </section>
+
+      <section>
+        <h3>Análisis asistido por LLM</h3>
+        <p>
+          En el apartado de análisis, el usuario define los requisitos del cargo y copia un prompt que luego
+          se envía junto con un PDF unificado a un modelo LLM externo. El resultado es un JSON con la evaluación
+          de los candidatos, que luego se integra en un análisis consolidado y se exporta a Excel para apoyar la
+          toma de decisiones.
+        </p>
+        <figure>
+          <img src="resources/project_4/analisis.png" alt="Sección de análisis con requisitos y prompt para LLM" width="720">
+          <figcaption>Interfaz para redactar requisitos y gestionar resultados de análisis.</figcaption>
+        </figure>
+      </section>
+
+      <nav aria-label="Volver">
+        <a href="portafolio.html">&larr; Regresar al portafolio</a>
+      </nav>
+    </article>
+  </main>
+
+  <hr>
+  <footer>
+    <p>&copy; 2025 Portafolio de Martín Montero</p>
+  </footer>
+</body>
+</html>
