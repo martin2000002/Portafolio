@@ -42,9 +42,12 @@ export class Contact implements AfterViewInit, OnDestroy {
     const mobileBlob = this.mobileBlobRef?.nativeElement ?? null;
     const isDesktop = window.innerWidth >= 1024;
     const mobileScale = this.config.BLOB_SCALE * 0.66;
+    const card = form.querySelector('#contact-card') as HTMLElement | null;
 
-    // Initial state
-    gsap.set(form, { opacity: 0, y: 50 });
+    // Initial state: do not fade the card, only move it
+    if (card) {
+      gsap.set(card, { y: 50 });
+    }
     if (!isDesktop && mobileBlob) {
       this.positionMobileBlob(mobileBlob, mobileScale);
       gsap.set(mobileBlob, { opacity: 0 });
@@ -68,13 +71,14 @@ export class Contact implements AfterViewInit, OnDestroy {
 
     const tl = gsap.timeline({ scrollTrigger: scrollTriggerConfig });
 
-    // Animate form and blob together
-    tl.to(form, {
-      opacity: 1,
-      y: 0,
-      duration: 1,
-      ease: 'power2.out',
-    });
+    // Animate card position (no opacity changes on the card)
+    if (card) {
+      tl.to(card, {
+        y: 0,
+        duration: 1,
+        ease: 'power2.out',
+      });
+    }
 
     this.scrollTrigger = tl.scrollTrigger;
   }
