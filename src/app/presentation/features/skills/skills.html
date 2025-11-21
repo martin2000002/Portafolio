@@ -13,7 +13,9 @@
         #bubbleContainer
         class="absolute will-change-transform"
         [class.cursor-pointer]="hasSkill(bubble)"
-        [style.pointer-events]="hasSkill(bubble) ? 'auto' : 'none'">
+        [class.pointer-events-auto]="hasSkill(bubble)"
+        [class.pointer-events-none]="!hasSkill(bubble)"
+        style="opacity: 0; visibility: hidden;">
         <!-- Bubble image -->
         <img
           #bubbleImg
@@ -21,6 +23,8 @@
           [alt]="hasSkill(bubble) ? (getSkillForBubble(bubble)?.name || '') : 'Skill bubble ' + bubble.id"
           class="w-full h-full select-none will-change-transform"
           style="opacity: 0;"
+          draggable="false"
+          oncontextmenu="return false;"
         />
         <!-- Icon overlay centrado (si tiene skill según el modo) -->
         @if (hasSkill(bubble)) {

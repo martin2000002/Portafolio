@@ -362,7 +362,7 @@ export class Skills implements AfterViewInit, OnDestroy {
               gsap.set(container, {
                 x: bubble.x,
                 y: bubble.y + moveY,
-                opacity: 1,
+                autoAlpha: 1,
               });
 
               // Hacer aparecer el icono progresivamente
@@ -383,7 +383,7 @@ export class Skills implements AfterViewInit, OnDestroy {
               gsap.set(container, {
                 x: bubble.x,
                 y: bubble.y + moveY,
-                opacity: Math.max(0, 1 - self.progress * 1.2), // Desaparecer más rápido también
+                autoAlpha: Math.max(0, 1 - self.progress * 1.2), // Desaparecer más rápido también
               });
             }
           });
@@ -445,7 +445,7 @@ export class Skills implements AfterViewInit, OnDestroy {
               gsap.set(container, {
                 x: bubble.x,
                 y: targetY,
-                opacity: 1,
+                autoAlpha: 1,
               });
 
               // Icons completamente visibles
@@ -456,7 +456,7 @@ export class Skills implements AfterViewInit, OnDestroy {
             } else {
               // Bubbles sin icon: desaparecen instantáneamente
               gsap.set(container, {
-                opacity: 0,
+                autoAlpha: 0,
               });
             }
           });
@@ -543,7 +543,7 @@ export class Skills implements AfterViewInit, OnDestroy {
                 gsap.set(container, {
                   x: bubble.x + moveX,
                   y: startY + moveY,
-                  opacity: 1,
+                  autoAlpha: 1,
                 });
               } else {
                 // Desktop: mover a la derecha en posiciones orgánicas
@@ -561,7 +561,7 @@ export class Skills implements AfterViewInit, OnDestroy {
                 gsap.set(container, {
                   x: bubble.x + moveX,
                   y: startY + moveY,
-                  opacity: 1,
+                  autoAlpha: 1,
                 });
               }
 
@@ -687,7 +687,7 @@ export class Skills implements AfterViewInit, OnDestroy {
               gsap.set(container, {
                 x: currentX,
                 y: currentY,
-                opacity: 1,
+                autoAlpha: 1,
               });
 
               // Ocultar iconos progresivamente
@@ -711,7 +711,7 @@ export class Skills implements AfterViewInit, OnDestroy {
               gsap.set(container, {
                 x: bubble.x,
                 y: currentY,
-                opacity: self.progress, // Aparecen progresivamente
+                autoAlpha: self.progress, // Aparecen progresivamente
               });
             }
           });
@@ -746,7 +746,7 @@ export class Skills implements AfterViewInit, OnDestroy {
         gsap.set(reverseBlob, { opacity: 0 });
         if (this.bubbleContainers) {
           this.bubbleContainers.forEach((containerRef) => {
-            gsap.set(containerRef.nativeElement, { opacity: 1 });
+            gsap.set(containerRef.nativeElement, { autoAlpha: 1 });
           });
         }
       },
@@ -754,7 +754,7 @@ export class Skills implements AfterViewInit, OnDestroy {
         // 1. Bubbles desaparecen inmediatamente y Blob aparece inmediatamente
         if (this.bubbleContainers) {
           this.bubbleContainers.forEach((containerRef) => {
-            gsap.set(containerRef.nativeElement, { opacity: 0 });
+            gsap.set(containerRef.nativeElement, { autoAlpha: 0 });
           });
         }
         
@@ -811,6 +811,7 @@ export class Skills implements AfterViewInit, OnDestroy {
           y: bubble.y,
           width: bubble.width,
           height: bubble.height,
+          autoAlpha: 0, // Inicialmente oculto y sin pointer-events
           force3D: true,
         });
       });
@@ -881,6 +882,13 @@ export class Skills implements AfterViewInit, OnDestroy {
         this.bubbleImgs.forEach((ref) => {
           gsap.set(ref.nativeElement, { opacity: 1 });
         });
+        
+        // Asegurar que los contenedores sean visibles
+        if (this.bubbleContainers) {
+          this.bubbleContainers.forEach((containerRef) => {
+            gsap.set(containerRef.nativeElement, { autoAlpha: 1 });
+          });
+        }
       },
       onLeaveBack: () => {
         // Ocultar el título
@@ -890,6 +898,13 @@ export class Skills implements AfterViewInit, OnDestroy {
         this.bubbleImgs.forEach((ref) => {
           gsap.set(ref.nativeElement, { opacity: 0 });
         });
+        
+        // Ocultar los contenedores para evitar clicks fantasma
+        if (this.bubbleContainers) {
+          this.bubbleContainers.forEach((containerRef) => {
+            gsap.set(containerRef.nativeElement, { autoAlpha: 0 });
+          });
+        }
 
         // Ocultar iconos
         if (this.bubbleIcons) {
@@ -910,6 +925,13 @@ export class Skills implements AfterViewInit, OnDestroy {
     this.bubbleImgs.forEach((ref) => {
       gsap.set(ref.nativeElement, { opacity: isPastStart ? 1 : 0 });
     });
+    
+    // Sincronizar visibilidad de contenedores
+    if (this.bubbleContainers) {
+      this.bubbleContainers.forEach((containerRef) => {
+        gsap.set(containerRef.nativeElement, { autoAlpha: isPastStart ? 1 : 0 });
+      });
+    }
     
     // Los iconos se manejan en Phase 1/2, así que inicialmente ocultos si no estamos en esas fases
     // Pero si estamos en Phase 2/3, deberían ser visibles.
