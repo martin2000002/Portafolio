@@ -1,3 +1,7 @@
+@if (showSplash()) {
+<app-reminder-splash [url]="canvaUrl()" (closed)="showSplash.set(false)" />
+}
+
 <app-starfield />
-<app-navbar/>
+<app-navbar />
 <router-outlet />

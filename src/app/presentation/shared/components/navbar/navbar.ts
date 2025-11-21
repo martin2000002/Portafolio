@@ -1,5 +1,27 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, ViewChild, ElementRef, AfterViewInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
-import { LucideAngularModule, SunIcon, MoonIcon, MenuIcon, UserIcon, SparklesIcon, FolderGit2Icon, MailIcon } from 'lucide-angular';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  OnDestroy,
+  ViewChildren,
+  QueryList,
+} from '@angular/core';
+import {
+  LucideAngularModule,
+  SunIcon,
+  MoonIcon,
+  MenuIcon,
+  UserIcon,
+  SparklesIcon,
+  FolderGit2Icon,
+  MailIcon,
+} from 'lucide-angular';
 import { gsap } from 'gsap';
 import { ThemeService } from '../../services/theme.service';
 
@@ -10,8 +32,8 @@ import { ThemeService } from '../../services/theme.service';
   styleUrl: './navbar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'block sticky top-0 z-50'
-  }
+    class: 'block sticky top-0 z-50',
+  },
 })
 export class Navbar implements AfterViewInit, OnDestroy {
   readonly MenuIcon = MenuIcon;
@@ -49,7 +71,6 @@ export class Navbar implements AfterViewInit, OnDestroy {
   onMenuItemClick(sectionId: string): void {
     this.closeMenu();
 
-    // Esperar a que el menú se cierre antes de scrollear
     setTimeout(() => {
       if (sectionId === 'skills') {
         this.scrollToSkillsAnchor();
@@ -58,7 +79,6 @@ export class Navbar implements AfterViewInit, OnDestroy {
       } else if (sectionId === 'about') {
         this.scrollToAbout();
       } else {
-        // Para otras secciones, scroll normal
         const section = document.getElementById(sectionId);
         if (section) {
           section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -77,7 +97,6 @@ export class Navbar implements AfterViewInit, OnDestroy {
   }
 
   private scrollToSkillsAnchor(): void {
-    // Buscar la sección de Skills
     const skillsSection = document.querySelector('app-skills section');
     if (!skillsSection) return;
 
@@ -86,7 +105,6 @@ export class Navbar implements AfterViewInit, OnDestroy {
     const viewportCenter = window.innerHeight / 2;
     const phase1Duration = isMobile ? 500 : 700;
 
-    // Calcular la posición de scroll del punto de anclaje (fase 2)
     const scrollPosition = sectionTop - viewportCenter + phase1Duration;
 
     window.scrollTo({
@@ -96,18 +114,13 @@ export class Navbar implements AfterViewInit, OnDestroy {
   }
 
   private scrollToProjects(): void {
-    // Usar la misma lógica que Skills para posicionar el título en navbar + 10px
     const projectsSection = document.getElementById('projects');
     if (!projectsSection) return;
 
     const isMobile = window.innerWidth < 640;
     const sectionTop = projectsSection.offsetTop;
     const viewportCenter = window.innerHeight / 2;
-    
-    // Projects tiene una animación que mueve el contenido desde 'top bottom' a 'top top+100'
-    // Para que el título quede en navbar + 10, necesitamos scrollear hasta que la sección
-    // esté en la posición 'top top+100' (similar a Skills Phase 2)
-    // Esto significa: sectionTop debe estar a 100px del top del viewport
+
     const scrollPosition = sectionTop - 100;
 
     window.scrollTo({
@@ -148,7 +161,6 @@ export class Navbar implements AfterViewInit, OnDestroy {
       document.removeEventListener('keydown', onKeyDown, true);
     });
   });
-    
 
   ngOnDestroy(): void {
     this.cleanupFns.forEach((fn) => fn());
@@ -202,8 +214,11 @@ export class Navbar implements AfterViewInit, OnDestroy {
       defaults: { ease: 'power2.inOut' },
       onComplete: () => this.menuOpen.set(false),
     });
-    tl.to(items, { y: 10, opacity: 0, duration: 0.15, stagger: { each: 0.03, from: 'end' } }, 0)
-      .to(panel, { y: -8, opacity: 0, duration: 0.22 }, '<');
+    tl.to(items, { y: 10, opacity: 0, duration: 0.15, stagger: { each: 0.03, from: 'end' } }, 0).to(
+      panel,
+      { y: -8, opacity: 0, duration: 0.22 },
+      '<'
+    );
   }
 
   private animateOpen(): void {
@@ -215,7 +230,10 @@ export class Navbar implements AfterViewInit, OnDestroy {
     if (items.length) gsap.set(items, { y: 8, opacity: 0 });
 
     const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-    tl.to(panel, { y: 0, opacity: 1, duration: 0.24 })
-      .to(items, { y: 0, opacity: 1, duration: 0.22, stagger: 0.06 }, '-=0.05');
+    tl.to(panel, { y: 0, opacity: 1, duration: 0.24 }).to(
+      items,
+      { y: 0, opacity: 1, duration: 0.22, stagger: 0.06 },
+      '-=0.05'
+    );
   }
 }

@@ -1,0 +1,37 @@
+<div class="fixed inset-0 z-1000">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+
+    <!-- Card -->
+    <div #cardRef class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] sm:w-[520px]">
+        <div
+            class="relative bg-white/80 dark:bg-white/10 backdrop-blur-md border border-neutral-200 dark:border-white/20 rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Close button -->
+            <button (click)="onClose()"
+                class="absolute top-3 right-3 p-2 rounded-full bg-white/80 dark:bg-black/40 border border-neutral-200/60 dark:border-white/10 text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-white/20 transition-colors">
+                <lucide-icon [img]="X" class="w-5 h-5"></lucide-icon>
+            </button>
+
+            <div class="p-6 sm:p-8">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white mb-3">
+                    Don't forget the Canva presentation
+                </h2>
+                <p class="text-neutral-700 dark:text-neutral-300 mb-6">
+                    Open the presentation before we start. You can close me when you're ready.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a [href]="url()" target="_blank" rel="noopener noreferrer"
+                        class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full font-bold bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-700 dark:hover:bg-gray-200 transition-colors">
+                        <lucide-icon [img]="ExternalLink" class="w-4 h-4"></lucide-icon>
+                        Open Canva
+                    </a>
+                    <button (click)="onClose()"
+                        class="inline-flex items-center justify-center px-5 py-3 rounded-full font-bold bg-neutral-100 dark:bg-white/10 text-neutral-900 dark:text-white border border-neutral-200 dark:border-white/20 hover:bg-neutral-200 dark:hover:bg-white/20 transition-colors">
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -11,7 +11,16 @@ import {
 import { CommonModule } from '@angular/common';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { LucideAngularModule, X, ExternalLink, Github, Code2, Terminal, Cpu, Brain } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  X,
+  ExternalLink,
+  Github,
+  Code2,
+  Terminal,
+  Cpu,
+  Brain,
+} from 'lucide-angular';
 import { BlobAnimationConfigService } from '../../shared/services/blob-animation-config.service';
 
 interface ProjectImage {
@@ -33,7 +42,7 @@ interface Project {
     repo?: string;
     doc?: string;
   };
-  techStackIcons?: string[]; // Lucide icon names or paths
+  techStackIcons?: string[];
 }
 
 interface BlobSyncPayload {
@@ -53,8 +62,8 @@ interface BlobSyncPayload {
   styleUrl: './projects.scss',
   host: {
     class: 'block',
-    '(window:resize)': 'onResize()'
-  }
+    '(window:resize)': 'onResize()',
+  },
 })
 export class Projects implements AfterViewInit, OnDestroy {
   @ViewChild('sectionRef') sectionRef!: ElementRef<HTMLElement>;
@@ -161,7 +170,8 @@ export class Projects implements AfterViewInit, OnDestroy {
   private lastBlobPosition = { x: 0, y: 0 };
   private resizeTimeout: any;
   private blobTransitionEnabled = false;
-  private readonly onSkillsBlobFinished = (event: Event) => this.handleSkillsBlobFinished(event as CustomEvent<BlobSyncPayload>);
+  private readonly onSkillsBlobFinished = (event: Event) =>
+    this.handleSkillsBlobFinished(event as CustomEvent<BlobSyncPayload>);
   private readonly onSkillsBlobReset = () => this.handleSkillsBlobReset();
   private readonly onSkillsBlobTakeover = () => this.handleSkillsBlobTakeover();
 
@@ -178,20 +188,16 @@ export class Projects implements AfterViewInit, OnDestroy {
   }
 
   onResize(): void {
-    // Debounce para evitar cálculos excesivos durante el resize
     if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
 
     this.resizeTimeout = setTimeout(() => {
-      // Recalcular dimensiones del blob
       this.setupBlobPosition();
 
-      // Recrear todas las animaciones con las nuevas dimensiones
       this.setupScrollAnimation();
       this.setupProjectsTransition();
       this.setupContactTransition();
       this.setupSkillsMonitor();
 
-      // Refresh de ScrollTrigger para recalcular posiciones
       ScrollTrigger.refresh();
     }, 250);
   }
@@ -206,9 +212,7 @@ export class Projects implements AfterViewInit, OnDestroy {
     const blobWidth = blob.offsetWidth || expected.width;
     const blobHeight = blob.offsetHeight || expected.height;
 
-    // Validar que las dimensiones sean válidas
     if (blobWidth <= 0 || blobHeight <= 0) {
-      // Si no hay dimensiones válidas, usar las esperadas y reintentar después
       this.blobDimensions = { width: expected.width, height: expected.height };
       requestAnimationFrame(() => this.setupBlobPosition());
       return;
@@ -238,54 +242,40 @@ export class Projects implements AfterViewInit, OnDestroy {
     const content = this.contentRef.nativeElement;
     const blob = this.blobRef.nativeElement;
 
-    // Initial state: Content starts below
     gsap.set(content, { y: 100, opacity: 0 });
-    
-    // Calculate target Y for the content container so that the title ends up at Navbar + 10px
+
     const navbarHeight = this.config.getNavbarHeight();
-    
-    // Calculate dynamic offset to ensure precision
-    // We need the title's offset relative to the content container
+
     const titleEl = content.querySelector('h2');
-    let titleOffset = 180; // Fallback (80px padding-top section + 100px padding-top content)
-    
+    let titleOffset = 180;
+
     if (titleEl) {
-      // Get styles to check for margins
       const style = window.getComputedStyle(titleEl);
       const marginTop = parseFloat(style.marginTop) || 0;
-      // The content container has pt-[100px] and section has py-20 (80px)
-      // So visually the title is at 180px + marginTop from the section top
+
       titleOffset = 180 + marginTop;
     }
 
-    // Target Y = navbarHeight + 10
-    // We want: titleOffset + translateY = navbarHeight + 10
-    // translateY = (navbarHeight + 10) - titleOffset
-    const finalContainerY = (navbarHeight + 10) - titleOffset;
+    const finalContainerY = navbarHeight + 10 - titleOffset;
 
-    // Create a timeline for the scroll animation
-    // NO PINNING to avoid "sticky bottom" effect
-    // Animate as the section enters the viewport
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: section,
-        start: 'top bottom', // Start when section top hits viewport bottom
-        end: 'top top+=100', // End when section top is near top (adjusted for navbar)
+        start: 'top bottom',
+        end: 'top top+=100',
         scrub: true,
-        invalidateOnRefresh: true
-      }
+        invalidateOnRefresh: true,
+      },
     });
 
-    // Animate content up to calculated position
     tl.to(content, {
       y: finalContainerY,
       opacity: 1,
       duration: 1,
-      ease: 'power1.out'
+      ease: 'power1.out',
     });
 
     this.contentScrollTrigger = tl.scrollTrigger;
-
   }
 
   private getBlobDimensions(): { width: number; height: number } {
@@ -321,7 +311,6 @@ export class Projects implements AfterViewInit, OnDestroy {
     const startX = detail.centerX - width / 2;
     const startY = detail.centerY - height / 2;
 
-    // Establecer el blob en la posición de skills
     gsap.set(blob, {
       opacity: 1,
       x: startX,
@@ -333,7 +322,6 @@ export class Projects implements AfterViewInit, OnDestroy {
 
     this.blobScrollTrigger?.enable();
     this.blobScrollTrigger?.refresh();
-    // La animación se manejará automáticamente por setupProjectsTransition
   }
 
   private handleSkillsBlobReset(): void {
@@ -347,7 +335,7 @@ export class Projects implements AfterViewInit, OnDestroy {
   private getProjectsBlobTarget(): { centerX: number; centerY: number; scale: number } {
     const cards = this.cardsRef?.nativeElement;
     const isMobile = window.innerWidth < 768;
-    const centerX = window.innerWidth / 2; // Siempre centrado horizontalmente
+    const centerX = window.innerWidth / 2;
 
     if (cards) {
       const rect = cards.getBoundingClientRect();
@@ -356,12 +344,13 @@ export class Projects implements AfterViewInit, OnDestroy {
       const availableHeight = window.innerHeight - navbarHeight;
       const centerY = navbarHeight + availableHeight / 2;
       const baseScale = this.config.BLOB_SCALE;
-      const scale = isMobile ? baseScale * 0.66 : baseScale * (window.innerWidth >= 1280 ? 0.78 : 0.74);
+      const scale = isMobile
+        ? baseScale * 0.66
+        : baseScale * (window.innerWidth >= 1280 ? 0.78 : 0.74);
 
       return { centerX, centerY, scale };
     }
 
-    // Fallback: centro del viewport
     const centerY = this.config.getAdjustedCenterY();
     const scale = this.config.BLOB_SCALE * 0.78;
     return { centerX, centerY, scale };
@@ -372,31 +361,25 @@ export class Projects implements AfterViewInit, OnDestroy {
     if (isDesktop) {
       const scale = this.config.BLOB_SCALE * 0.68;
 
-      // Desktop: El blob debe estar centrado horizontalmente en el espacio disponible a la derecha del card
-      // El layout usa grid con max-w-7xl centrado, con columnas [minmax(0,520px)_1fr]
-      // Necesitamos encontrar dónde termina el card y dónde empieza el espacio disponible
       const contactCard = document.getElementById('contact-card');
-      let centerX = window.innerWidth * 0.75; // Fallback: 3/4 del ancho
+      let centerX = window.innerWidth * 0.75;
       let centerY = window.innerHeight / 2;
 
       if (contactCard) {
         const rect = contactCard.getBoundingClientRect();
-        // El espacio disponible es desde el final del card hasta el borde derecho
+
         const availableSpaceStart = rect.right;
         const availableSpaceEnd = window.innerWidth;
         const availableSpaceWidth = availableSpaceEnd - availableSpaceStart;
 
-        // Centrar horizontalmente en el espacio disponible
         centerX = availableSpaceStart + availableSpaceWidth / 2;
 
-        // Centrar verticalmente con el card
         centerY = window.innerHeight / 2;
       }
 
       return { centerX, centerY, scale };
     }
 
-    // Mobile: blob detrás del card, alineado con su centro
     const mobileScale = this.config.BLOB_SCALE * 0.62;
     const contactCard = document.getElementById('contact-card');
     let centerY = this.config.getAdjustedCenterY();
@@ -430,7 +413,6 @@ export class Projects implements AfterViewInit, OnDestroy {
     const section = this.sectionRef.nativeElement;
     const blob = this.blobRef.nativeElement;
 
-    // Obtener posiciones de inicio (skills) y final (projects)
     const skillsTarget = this.getSkillsBlobTarget();
     const projectsTarget = this.getProjectsBlobTarget();
     const { width, height } = this.getBlobDimensions();
@@ -440,7 +422,6 @@ export class Projects implements AfterViewInit, OnDestroy {
     const projectsX = projectsTarget.centerX - width / 2;
     const projectsY = projectsTarget.centerY - height / 2;
 
-    // Crear una única animación reversible
     this.blobScrollTrigger = ScrollTrigger.create({
       trigger: section,
       start: 'top bottom',
@@ -454,47 +435,43 @@ export class Projects implements AfterViewInit, OnDestroy {
         }
         const progress = self.progress;
 
-        // Interpolar posición
         const currentX = skillsX + (projectsX - skillsX) * progress;
         const currentY = skillsY + (projectsY - skillsY) * progress;
-        const currentScale = skillsTarget.scale + (projectsTarget.scale - skillsTarget.scale) * progress;
+        const currentScale =
+          skillsTarget.scale + (projectsTarget.scale - skillsTarget.scale) * progress;
 
         gsap.set(blob, {
           x: currentX,
           y: currentY,
           scale: currentScale,
-          opacity: 1
+          opacity: 1,
         });
 
         this.lastBlobPosition = { x: currentX, y: currentY };
       },
       onEnter: () => {
-        // Al entrar desde arriba, asegurar que el blob esté visible
         gsap.set(blob, { opacity: 1 });
       },
       onLeave: () => {
-        // Al salir hacia abajo (entrando a projects completamente)
         gsap.set(blob, {
           x: projectsX,
           y: projectsY,
           scale: projectsTarget.scale,
-          opacity: 1
+          opacity: 1,
         });
         this.lastBlobPosition = { x: projectsX, y: projectsY };
       },
       onEnterBack: () => {
-        // Al volver desde contact hacia projects, mostrar el blob
         if (this.blobTransitionEnabled) {
           gsap.set(blob, { opacity: 1 });
         }
       },
       onLeaveBack: () => {
-        // Al regresar hacia arriba (volviendo a skills) - ocultar inmediatamente
         gsap.set(blob, { opacity: 0 });
         this.lastBlobPosition = { x: skillsX, y: skillsY };
-        // Notificar a skills que tome control del blob
+
         this.emitSkillsBlobTakeover();
-      }
+      },
     });
 
     if (!this.blobTransitionEnabled) {
@@ -508,32 +485,27 @@ export class Projects implements AfterViewInit, OnDestroy {
       this.skillsMonitorTrigger = undefined;
     }
 
-    // Buscar la sección de Skills
     const skillsSection = document.querySelector('app-skills section');
     if (!skillsSection) {
-      // Si no se encuentra, reintentar después
       setTimeout(() => this.setupSkillsMonitor(), 200);
       return;
     }
 
     const blob = this.blobRef.nativeElement;
 
-    // Monitor determinístico: cuando skills empieza (top alcanza center), ocultar blob inmediatamente
     this.skillsMonitorTrigger = ScrollTrigger.create({
       trigger: skillsSection,
-      start: 'top center', // Cuando skills empieza su secuencia
+      start: 'top center',
       end: 'bottom center',
       invalidateOnRefresh: true,
       onEnter: () => {
-        // Entrando a skills desde arriba (scrolleando hacia abajo) - ocultar blob inmediatamente
         gsap.set(blob, { opacity: 0 });
         this.emitSkillsBlobTakeover();
       },
       onEnterBack: () => {
-        // Volviendo a skills desde projects (scrolleando hacia arriba) - ocultar blob inmediatamente
         gsap.set(blob, { opacity: 0 });
         this.emitSkillsBlobTakeover();
-      }
+      },
     });
   }
 
@@ -609,18 +581,18 @@ export class Projects implements AfterViewInit, OnDestroy {
         const easedProgress = ease(self.progress);
         const currentX = projectsX + (contactX - projectsX) * easedProgress;
         const currentY = projectsY + (contactY - projectsY) * easedProgress;
-        const currentScale = projectsTarget.scale + (contactTarget.scale - projectsTarget.scale) * easedProgress;
+        const currentScale =
+          projectsTarget.scale + (contactTarget.scale - projectsTarget.scale) * easedProgress;
 
         gsap.set(blob, {
           x: currentX,
           y: currentY,
           scale: currentScale,
-          opacity: 1
+          opacity: 1,
         });
 
         this.lastBlobPosition = { x: currentX, y: currentY };
 
-        // Iniciar float solo cuando estamos cerca del final
         if (easedProgress > 0.9 && !this.contactFloatTween) {
           this.startContactFloat();
         } else if (easedProgress <= 0.9 && this.contactFloatTween) {
@@ -633,16 +605,14 @@ export class Projects implements AfterViewInit, OnDestroy {
           x: projectsX,
           y: projectsY,
           scale: projectsTarget.scale,
-          opacity: 1
+          opacity: 1,
         });
         this.lastBlobPosition = { x: projectsX, y: projectsY };
-      }
+      },
     });
   }
 
   private handleSkillsBlobTakeover(): void {
-    // Este evento ya no se usa, la animación es reversible automáticamente
-    // Solo necesitamos ocultar el blob y resetear
     if (!this.blobRef?.nativeElement) return;
     const blob = this.blobRef.nativeElement;
     this.stopContactFloat();
@@ -653,13 +623,13 @@ export class Projects implements AfterViewInit, OnDestroy {
 
   openProject(project: Project): void {
     this.selectedProject.set(project);
-    // Small delay to allow dialog to render
+
     setTimeout(() => {
       this.modalRef.nativeElement.showModal();
-      document.body.style.overflow = 'hidden'; // Prevent background scroll
-      
-      // Animate modal entry
-      gsap.fromTo(this.modalRef.nativeElement, 
+      document.body.style.overflow = 'hidden';
+
+      gsap.fromTo(
+        this.modalRef.nativeElement,
         { opacity: 0, scale: 0.9 },
         { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.2)' }
       );
@@ -668,7 +638,7 @@ export class Projects implements AfterViewInit, OnDestroy {
 
   closeModal(): void {
     const dialog = this.modalRef.nativeElement;
-    
+
     gsap.to(dialog, {
       opacity: 0,
       scale: 0.9,
@@ -677,7 +647,7 @@ export class Projects implements AfterViewInit, OnDestroy {
         dialog.close();
         this.selectedProject.set(null);
         document.body.style.overflow = '';
-      }
+      },
     });
   }
 

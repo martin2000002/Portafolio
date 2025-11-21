@@ -64,5 +64,6 @@ Desktop.ini
 # COMPILADOS / DEPLOY
 dist/portafolio/
 public/
+
+# CUSTOMS
 backup/
-plan-projects/

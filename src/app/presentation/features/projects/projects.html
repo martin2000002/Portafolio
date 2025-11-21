@@ -1,176 +1,174 @@
-<section id="projects" #sectionRef class="relative min-h-screen w-full flex flex-col items-center justify-start overflow-hidden scroll-mt-0">
-  
+<section id="projects" #sectionRef
+  class="relative min-h-screen w-full flex flex-col items-center justify-start overflow-hidden scroll-mt-0">
+
   <!-- Background Blob - Positioned behind everything with z-[-1] -->
   <div class="fixed inset-0 pointer-events-none z-[-1]">
-    <img #blobRef
-         src="assets/3d_shape/01.webp" 
-         alt="Background Blob" 
-         class="absolute w-[85vw] sm:w-[65vw] max-w-[900px] sm:max-w-[700px] opacity-0"
-         draggable="false"
-         oncontextmenu="return false;">
+    <img #blobRef src="assets/3d_shape/01.webp" alt="Background Blob"
+      class="absolute w-[85vw] sm:w-[65vw] max-w-[900px] sm:max-w-[700px] opacity-0" draggable="false"
+      oncontextmenu="return false;">
   </div>
 
   <!-- Content Container -->
-  <div #contentRef class="container mx-auto px-4 z-10 flex flex-col items-center opacity-0 translate-y-[100px] pt-[100px]">
-    
+  <div #contentRef
+    class="container mx-auto px-4 z-10 flex flex-col items-center opacity-0 translate-y-[100px] pt-[100px]">
+
     <!-- Title -->
-    <h2 class="text-[80px] sm:text-[130px] md:text-[140px] lg:text-[150px] font-extrabold text-neutral-900 dark:text-neutral-100 leading-none tracking-tight mb-12 text-center drop-shadow-lg">
+    <h2
+      class="text-[80px] sm:text-[130px] md:text-[140px] lg:text-[150px] font-extrabold text-neutral-900 dark:text-neutral-100 leading-none tracking-tight mb-12 text-center drop-shadow-lg">
       Projects
     </h2>
 
     <!-- Cards Grid -->
     <div #cardsRef class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-[85%] md:max-w-7xl">
       @for (project of projects; track project.id) {
-        <div #projectCard 
-             class="group relative bg-white/80 dark:bg-white/10 backdrop-blur-md border border-neutral-200 dark:border-white/20 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:border-primary-500/40 dark:hover:border-white/40"
-             (click)="openProject(project)">
-          
-          <!-- Image Container -->
-          <div class="aspect-video w-full overflow-hidden">
-            <img [src]="project.mainImage" 
-                 [alt]="project.title" 
-                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                 draggable="false"
-                 oncontextmenu="return false;">
-          </div>
+      <div #projectCard
+        class="group relative bg-white/80 dark:bg-white/10 backdrop-blur-md border border-neutral-200 dark:border-white/20 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:border-primary-500/40 dark:hover:border-white/40"
+        (click)="openProject(project)">
 
-          <!-- Content -->
-          <div class="p-5">
-            <h3 class="text-xl font-bold text-neutral-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-              {{ project.title }}
-            </h3>
-            <p class="text-neutral-600 dark:text-gray-300 text-sm line-clamp-2">
-              {{ project.shortDescription }}
-            </p>
-            
-            <!-- Tags -->
-            <div class="flex flex-wrap gap-2 mt-4">
-              @for (tag of project.tags.slice(0, 3); track tag) {
-                <span class="px-2 py-1 text-xs font-medium bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-white rounded-full border border-neutral-200 dark:border-white/10">
-                  {{ tag }}
-                </span>
-              }
-            </div>
-          </div>
-
-          <!-- Hover Overlay (Gradient only, no button) -->
-          <div class="absolute inset-0 bg-linear-to-t from-black/10 dark:from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+        <!-- Image Container -->
+        <div class="aspect-video w-full overflow-hidden">
+          <img [src]="project.mainImage" [alt]="project.title"
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" draggable="false"
+            oncontextmenu="return false;">
         </div>
+
+        <!-- Content -->
+        <div class="p-5">
+          <h3
+            class="text-xl font-bold text-neutral-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+            {{ project.title }}
+          </h3>
+          <p class="text-neutral-600 dark:text-gray-300 text-sm line-clamp-2">
+            {{ project.shortDescription }}
+          </p>
+
+          <!-- Tags -->
+          <div class="flex flex-wrap gap-2 mt-4">
+            @for (tag of project.tags.slice(0, 3); track tag) {
+            <span
+              class="px-2 py-1 text-xs font-medium bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-white rounded-full border border-neutral-200 dark:border-white/10">
+              {{ tag }}
+            </span>
+            }
+          </div>
+        </div>
+
+        <!-- Hover Overlay (Gradient only, no button) -->
+        <div
+          class="absolute inset-0 bg-linear-to-t from-black/10 dark:from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        </div>
+      </div>
       }
     </div>
   </div>
 
   <!-- Modal Dialog -->
-  <dialog #modalRef 
-          class="backdrop:bg-black/50 dark:backdrop:bg-black/80 bg-transparent p-0 m-auto max-w-4xl w-[95%] md:w-full rounded-3xl shadow-2xl outline-none overflow-hidden"
-          (click)="onBackdropClick($event)">
-    
-    @if (selectedProject(); as project) {
-      <div class="bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white w-full h-full max-h-[90vh] overflow-y-auto flex flex-col md:flex-row relative border border-neutral-200 dark:border-white/10">
-        
-        <!-- Close Button - Fixed en top-right -->
-        <button (click)="closeModal()" 
-                class="fixed top-4 right-4 z-50 p-2 bg-white/80 dark:bg-black/50 hover:bg-neutral-200 dark:hover:bg-white/20 rounded-full transition-colors text-neutral-900 dark:text-white shadow-sm">
-          <lucide-icon [img]="X" class="w-6 h-6"></lucide-icon>
-        </button>
+  <dialog #modalRef
+    class="backdrop:bg-black/50 dark:backdrop:bg-black/80 bg-transparent p-0 m-auto max-w-4xl w-[95%] md:w-full rounded-3xl shadow-2xl outline-none overflow-hidden"
+    (click)="onBackdropClick($event)">
 
-        <!-- Left: Image/Gallery -->
-        <div class="w-full md:w-1/2 bg-neutral-100 dark:bg-black/40 p-6 flex flex-col gap-4 md:sticky md:top-0">
-          <div class="rounded-xl overflow-hidden border border-neutral-200 dark:border-white/10 shadow-lg aspect-video">
-            <img [src]="project.mainImage" 
-                 [alt]="project.title" 
-                 class="w-full h-full object-cover"
-                 draggable="false"
-                 oncontextmenu="return false;">
-          </div>
-          
-          <!-- Mini Gallery -->
-          <div class="grid grid-cols-3 gap-2">
-            @for (img of project.gallery; track img.src) {
-              <div class="rounded-lg overflow-hidden border border-neutral-200 dark:border-white/10 cursor-pointer hover:opacity-80 transition-opacity aspect-video">
-                <img [src]="img.src" 
-                     [alt]="img.alt" 
-                     class="w-full h-full object-cover"
-                     draggable="false"
-                     oncontextmenu="return false;">
-              </div>
-            }
-          </div>
+    @if (selectedProject(); as project) {
+    <div
+      class="bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white w-full h-full max-h-[90vh] overflow-y-auto flex flex-col md:flex-row relative border border-neutral-200 dark:border-white/10">
+
+      <!-- Close Button - Fixed en top-right -->
+      <button (click)="closeModal()"
+        class="fixed top-4 right-4 z-50 p-2 bg-white/80 dark:bg-black/50 hover:bg-neutral-200 dark:hover:bg-white/20 rounded-full transition-colors text-neutral-900 dark:text-white shadow-sm">
+        <lucide-icon [img]="X" class="w-6 h-6"></lucide-icon>
+      </button>
+
+      <!-- Left: Image/Gallery -->
+      <div class="w-full md:w-1/2 bg-neutral-100 dark:bg-black/40 p-6 flex flex-col gap-4 md:sticky md:top-0">
+        <div class="rounded-xl overflow-hidden border border-neutral-200 dark:border-white/10 shadow-lg aspect-video">
+          <img [src]="project.mainImage" [alt]="project.title" class="w-full h-full object-cover" draggable="false"
+            oncontextmenu="return false;">
         </div>
 
-        <!-- Right: Content -->
-        <div class="w-full md:w-1/2 p-8 flex flex-col">
-          
-          <!-- Header -->
-          <div class="mb-6">
-            <h2 class="text-3xl md:text-4xl font-bold mb-2 text-transparent bg-clip-text bg-linear-to-r from-neutral-900 to-neutral-500 dark:from-white dark:to-gray-400">
-              {{ project.title }}
-            </h2>
-            
-            <!-- Tech Stack Icons -->
-            <div class="flex gap-3 mt-3 text-neutral-500 dark:text-gray-400">
-              @if (project.techStackIcons) {
-                @for (icon of project.techStackIcons; track icon) {
-                  <!-- Dynamic icon rendering would be ideal, but for now we map manually or use generic -->
-                  <div class="p-2 bg-neutral-100 dark:bg-white/5 rounded-lg border border-neutral-200 dark:border-white/10">
-                    @switch (icon) {
-                      @case ('Code2') { <lucide-icon [img]="Code2" class="w-5 h-5"></lucide-icon> }
-                      @case ('Terminal') { <lucide-icon [img]="Terminal" class="w-5 h-5"></lucide-icon> }
-                      @case ('Cpu') { <lucide-icon [img]="Cpu" class="w-5 h-5"></lucide-icon> }
-                      @case ('Brain') { <lucide-icon [img]="Brain" class="w-5 h-5"></lucide-icon> }
-                      @default { <lucide-icon [img]="Code2" class="w-5 h-5"></lucide-icon> }
-                    }
-                  </div>
-                }
-              }
-            </div>
+        <!-- Mini Gallery -->
+        <div class="grid grid-cols-3 gap-2">
+          @for (img of project.gallery; track img.src) {
+          <div
+            class="rounded-lg overflow-hidden border border-neutral-200 dark:border-white/10 cursor-pointer hover:opacity-80 transition-opacity aspect-video">
+            <img [src]="img.src" [alt]="img.alt" class="w-full h-full object-cover" draggable="false"
+              oncontextmenu="return false;">
           </div>
-
-          <!-- Description -->
-          <div class="prose prose-neutral dark:prose-invert prose-sm max-w-none mb-8 text-neutral-600 dark:text-gray-300 leading-relaxed"
-               [innerHTML]="project.fullDescription">
-          </div>
-
-          <!-- Tags -->
-          <div class="flex flex-wrap gap-2 mb-8">
-            @for (tag of project.tags; track tag) {
-              <span class="px-3 py-1 text-sm font-medium bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-200 rounded-full border border-primary-200 dark:border-primary-500/30">
-                {{ tag }}
-              </span>
-            }
-          </div>
-
-          <!-- Links -->
-          @if (project.links) {
-            <div class="mt-auto flex flex-wrap gap-4 pt-6 border-t border-neutral-200 dark:border-white/10">
-              @if (project.links.demo) {
-                <a [href]="project.links.demo" 
-                   target="_blank" 
-                   class="flex items-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-white text-white dark:text-black font-bold rounded-full hover:bg-neutral-700 dark:hover:bg-gray-200 transition-colors">
-                  <lucide-icon [img]="ExternalLink" class="w-4 h-4"></lucide-icon>
-                  Live Demo
-                </a>
-              }
-              @if (project.links.repo) {
-                <a [href]="project.links.repo" 
-                   target="_blank" 
-                   class="flex items-center gap-2 px-6 py-3 bg-neutral-100 dark:bg-white/10 text-neutral-900 dark:text-white font-bold rounded-full hover:bg-neutral-200 dark:hover:bg-white/20 transition-colors border border-neutral-200 dark:border-white/20">
-                  <lucide-icon [img]="Github" class="w-4 h-4"></lucide-icon>
-                  Repository
-                </a>
-              }
-              @if (project.links.doc) {
-                <a [href]="project.links.doc" 
-                   target="_blank" 
-                   class="flex items-center gap-2 px-6 py-3 bg-neutral-100 dark:bg-white/10 text-neutral-900 dark:text-white font-bold rounded-full hover:bg-neutral-200 dark:hover:bg-white/20 transition-colors border border-neutral-200 dark:border-white/20">
-                  <lucide-icon [img]="ExternalLink" class="w-4 h-4"></lucide-icon>
-                  Documentation
-                </a>
-              }
-            </div>
           }
         </div>
       </div>
+
+      <!-- Right: Content -->
+      <div class="w-full md:w-1/2 p-8 flex flex-col">
+
+        <!-- Header -->
+        <div class="mb-6">
+          <h2
+            class="text-3xl md:text-4xl font-bold mb-2 text-transparent bg-clip-text bg-linear-to-r from-neutral-900 to-neutral-500 dark:from-white dark:to-gray-400">
+            {{ project.title }}
+          </h2>
+
+          <!-- Tech Stack Icons -->
+          <div class="flex gap-3 mt-3 text-neutral-500 dark:text-gray-400">
+            @if (project.techStackIcons) {
+            @for (icon of project.techStackIcons; track icon) {
+            <!-- Dynamic icon rendering would be ideal, but for now we map manually or use generic -->
+            <div class="p-2 bg-neutral-100 dark:bg-white/5 rounded-lg border border-neutral-200 dark:border-white/10">
+              @switch (icon) {
+              @case ('Code2') { <lucide-icon [img]="Code2" class="w-5 h-5"></lucide-icon> }
+              @case ('Terminal') { <lucide-icon [img]="Terminal" class="w-5 h-5"></lucide-icon> }
+              @case ('Cpu') { <lucide-icon [img]="Cpu" class="w-5 h-5"></lucide-icon> }
+              @case ('Brain') { <lucide-icon [img]="Brain" class="w-5 h-5"></lucide-icon> }
+              @default { <lucide-icon [img]="Code2" class="w-5 h-5"></lucide-icon> }
+              }
+            </div>
+            }
+            }
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div
+          class="prose prose-neutral dark:prose-invert prose-sm max-w-none mb-8 text-neutral-600 dark:text-gray-300 leading-relaxed"
+          [innerHTML]="project.fullDescription">
+        </div>
+
+        <!-- Tags -->
+        <div class="flex flex-wrap gap-2 mb-8">
+          @for (tag of project.tags; track tag) {
+          <span
+            class="px-3 py-1 text-sm font-medium bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-200 rounded-full border border-primary-200 dark:border-primary-500/30">
+            {{ tag }}
+          </span>
+          }
+        </div>
+
+        <!-- Links -->
+        @if (project.links) {
+        <div class="mt-auto flex flex-wrap gap-4 pt-6 border-t border-neutral-200 dark:border-white/10">
+          @if (project.links.demo) {
+          <a [href]="project.links.demo" target="_blank"
+            class="flex items-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-white text-white dark:text-black font-bold rounded-full hover:bg-neutral-700 dark:hover:bg-gray-200 transition-colors">
+            <lucide-icon [img]="ExternalLink" class="w-4 h-4"></lucide-icon>
+            Live Demo
+          </a>
+          }
+          @if (project.links.repo) {
+          <a [href]="project.links.repo" target="_blank"
+            class="flex items-center gap-2 px-6 py-3 bg-neutral-100 dark:bg-white/10 text-neutral-900 dark:text-white font-bold rounded-full hover:bg-neutral-200 dark:hover:bg-white/20 transition-colors border border-neutral-200 dark:border-white/20">
+            <lucide-icon [img]="Github" class="w-4 h-4"></lucide-icon>
+            Repository
+          </a>
+          }
+          @if (project.links.doc) {
+          <a [href]="project.links.doc" target="_blank"
+            class="flex items-center gap-2 px-6 py-3 bg-neutral-100 dark:bg-white/10 text-neutral-900 dark:text-white font-bold rounded-full hover:bg-neutral-200 dark:hover:bg-white/20 transition-colors border border-neutral-200 dark:border-white/20">
+            <lucide-icon [img]="ExternalLink" class="w-4 h-4"></lucide-icon>
+            Documentation
+          </a>
+          }
+        </div>
+        }
+      </div>
+    </div>
     }
   </dialog>
 </section>

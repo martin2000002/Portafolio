@@ -7,7 +7,7 @@ export class ThemeService {
   readonly mode = signal<ThemeMode>('light');
 
   constructor() {
-    const stored = (localStorage.getItem('theme') as ThemeMode | null);
+    const stored = localStorage.getItem('theme') as ThemeMode | null;
     const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
     const initial: ThemeMode = stored ?? (prefersDark ? 'dark' : 'light');
     this.mode.set(initial);

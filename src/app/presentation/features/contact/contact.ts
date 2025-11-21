@@ -44,7 +44,6 @@ export class Contact implements AfterViewInit, OnDestroy {
     const mobileScale = this.config.BLOB_SCALE * 0.66;
     const card = form.querySelector('#contact-card') as HTMLElement | null;
 
-    // Initial state: do not fade the card, only move it
     if (card) {
       gsap.set(card, { y: 50 });
     }
@@ -53,7 +52,6 @@ export class Contact implements AfterViewInit, OnDestroy {
       gsap.set(mobileBlob, { opacity: 0 });
     }
 
-    // Create timeline
     const scrollTriggerConfig: ScrollTrigger.Vars = {
       trigger: section,
       start: 'top bottom',
@@ -71,7 +69,6 @@ export class Contact implements AfterViewInit, OnDestroy {
 
     const tl = gsap.timeline({ scrollTrigger: scrollTriggerConfig });
 
-    // Animate card position (no opacity changes on the card)
     if (card) {
       tl.to(card, {
         y: 0,

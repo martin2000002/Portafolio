@@ -1,4 +1,5 @@
-<footer class="relative mt-auto border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-950/80 backdrop-blur-sm">
+<footer
+  class="relative mt-auto border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-950/80 backdrop-blur-sm">
   <div class="mx-auto max-w-7xl px-3 py-4">
     <div class="flex flex-col items-center justify-between gap-2 md:flex-row">
       <div class="text-center md:text-left">
@@ -8,30 +9,18 @@
       </div>
 
       <div class="flex items-center gap-6">
-        <a
-          [href]="LINKS.github"
-          target="_blank"
-          rel="noopener noreferrer"
+        <a [href]="LINKS.github" target="_blank" rel="noopener noreferrer"
           class="group flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200/50 dark:bg-neutral-800/50 transition-all duration-300 hover:scale-110 hover:bg-primary-500 dark:hover:bg-primary-500"
-          aria-label="GitHub"
-        >
-          <lucide-icon
-            [img]="GithubIcon"
-            class="h-5 w-5 text-neutral-700 dark:text-neutral-300 group-hover:text-white transition-colors"
-          ></lucide-icon>
+          aria-label="GitHub">
+          <lucide-icon [img]="GithubIcon"
+            class="h-5 w-5 text-neutral-700 dark:text-neutral-300 group-hover:text-white transition-colors"></lucide-icon>
         </a>
 
-        <a
-          [href]="LINKS.linkedin"
-          target="_blank"
-          rel="noopener noreferrer"
+        <a [href]="LINKS.linkedin" target="_blank" rel="noopener noreferrer"
           class="group flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200/50 dark:bg-neutral-800/50 transition-all duration-300 hover:scale-110 hover:bg-primary-500 dark:hover:bg-primary-500"
-          aria-label="LinkedIn"
-        >
-          <lucide-icon
-            [img]="LinkedinIcon"
-            class="h-5 w-5 text-neutral-700 dark:text-neutral-300 group-hover:text-white transition-colors"
-          ></lucide-icon>
+          aria-label="LinkedIn">
+          <lucide-icon [img]="LinkedinIcon"
+            class="h-5 w-5 text-neutral-700 dark:text-neutral-300 group-hover:text-white transition-colors"></lucide-icon>
         </a>
       </div>
     </div>

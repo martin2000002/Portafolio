@@ -11,6 +11,4 @@ import { Footer } from '../features/footer/footer';
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
-export class Home {
-
-}
+export class Home {}

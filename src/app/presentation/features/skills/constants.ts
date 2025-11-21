@@ -1,6 +1,3 @@
-// Centralized constants for Skills feature
-// Exports raw bubble definitions and layout position presets used by animations.
-
 export const BUBBLES = [
   {
     id: '1_1',
@@ -81,7 +78,7 @@ export const BUBBLES = [
       iconInitialX: 0,
       iconInitialY: 0,
       iconScale: 1.3,
-    }
+    },
   },
   {
     id: '1_4',
@@ -319,9 +316,9 @@ export const MOBILE_POSITIONS = [
   { x: 0.15, y: 0.12 }, // Three.js
   { x: 0.68, y: 0.08 }, // Firebase
   { x: 0.42, y: 0.28 }, // SQL Server
-  { x: 0.80, y: 0.35 }, // Git
+  { x: 0.8, y: 0.35 }, // Git
   { x: 0.22, y: 0.52 }, // React
   { x: 0.55, y: 0.58 }, // Docker
-  { x: 0.10, y: 0.78 }, // Angular
+  { x: 0.1, y: 0.78 }, // Angular
   { x: 0.72, y: 0.75 }, // .NET
 ];

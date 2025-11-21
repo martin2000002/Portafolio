@@ -1,13 +1,7 @@
 <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
   @for (s of stars; track s.left + s.originalTop) {
-    <span
-      #starEl
-      class="absolute rounded-full bg-primary-400/70 dark:bg-secondary-400/70 will-change-transform"
-      [style.left.px]="s.left"
-      [style.top.px]="s.currentTop"
-      [style.width.px]="s.size"
-      [style.height.px]="s.size"
-      [style.opacity]="s.opacity"
-    ></span>
+  <span #starEl class="absolute rounded-full bg-primary-400/70 dark:bg-secondary-400/70 will-change-transform"
+    [style.left.px]="s.left" [style.top.px]="s.currentTop" [style.width.px]="s.size" [style.height.px]="s.size"
+    [style.opacity]="s.opacity"></span>
   }
 </div>

@@ -1,7 +1,9 @@
 <section #sectionRef class="relative min-h-screen">
   <!-- Título SKILLS que sube desde abajo (inicialmente invisible y abajo) -->
   <div class="fixed inset-0 pointer-events-none z-40 flex items-center justify-center">
-    <h2 #titleRef class="text-[80px] sm:text-[130px] md:text-[140px] lg:text-[150px] font-extrabold text-neutral-900 dark:text-neutral-100 leading-none tracking-tight" style="opacity: 0;">
+    <h2 #titleRef
+      class="text-[80px] sm:text-[130px] md:text-[140px] lg:text-[150px] font-extrabold text-neutral-900 dark:text-neutral-100 leading-none tracking-tight"
+      style="opacity: 0;">
       Skills
     </h2>
   </div>
@@ -9,34 +11,22 @@
   <!-- Grid de burbujas individuales con iconos -->
   <div class="fixed inset-0 z-30 pointer-events-none">
     @for (bubble of bubbles; track bubble.id; let i = $index) {
-      <div
-        #bubbleContainer
-        class="absolute will-change-transform"
-        [class.cursor-pointer]="hasSkill(bubble)"
-        [class.pointer-events-auto]="hasSkill(bubble)"
-        [class.pointer-events-none]="!hasSkill(bubble)"
-        style="opacity: 0; visibility: hidden;">
-        <!-- Bubble image -->
-        <img
-          #bubbleImg
-          [src]="bubble.src"
-          [alt]="hasSkill(bubble) ? (getSkillForBubble(bubble)?.name || '') : 'Skill bubble ' + bubble.id"
-          class="w-full h-full select-none will-change-transform"
-          style="opacity: 0;"
-          draggable="false"
-          oncontextmenu="return false;"
-        />
-        <!-- Icon overlay centrado (si tiene skill según el modo) -->
-        @if (hasSkill(bubble)) {
-          <img
-            #bubbleIcon
-            [src]="getSkillForBubble(bubble)?.icon || ''"
-            [alt]="(getSkillForBubble(bubble)?.name || '') + ' icon'"
-            class="absolute pointer-events-none select-none will-change-transform"
-            style="opacity: 0; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40%; height: 40%; object-fit: contain;"
-          />
-        }
-      </div>
+    <div #bubbleContainer class="absolute will-change-transform" [class.cursor-pointer]="hasSkill(bubble)"
+      [class.pointer-events-auto]="hasSkill(bubble)" [class.pointer-events-none]="!hasSkill(bubble)"
+      style="opacity: 0; visibility: hidden;">
+      <!-- Bubble image -->
+      <img #bubbleImg [src]="bubble.src"
+        [alt]="hasSkill(bubble) ? (getSkillForBubble(bubble)?.name || '') : 'Skill bubble ' + bubble.id"
+        class="w-full h-full select-none will-change-transform" style="opacity: 0;" draggable="false"
+        oncontextmenu="return false;" />
+      <!-- Icon overlay centrado (si tiene skill según el modo) -->
+      @if (hasSkill(bubble)) {
+      <img #bubbleIcon [src]="getSkillForBubble(bubble)?.icon || ''"
+        [alt]="(getSkillForBubble(bubble)?.name || '') + ' icon'"
+        class="absolute pointer-events-none select-none will-change-transform"
+        style="opacity: 0; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40%; height: 40%; object-fit: contain;" />
+      }
+    </div>
     }
   </div>
 
@@ -46,7 +36,8 @@
     <div class="hidden sm:flex absolute top-0 left-0 w-1/2 h-full items-center justify-center px-12">
       <div class="space-y-4 lg:space-y-6 w-full max-w-[600px]">
         <!-- Nombre del skill -->
-        <h3 class="text-5xl md:text-6xl lg:text-7xl font-black text-neutral-900 dark:text-neutral-100 leading-none tracking-tight">
+        <h3
+          class="text-5xl md:text-6xl lg:text-7xl font-black text-neutral-900 dark:text-neutral-100 leading-none tracking-tight">
           {{ selectedSkill().name }}
         </h3>
         <!-- Descripción del skill -->
@@ -70,13 +61,9 @@
   </div>
 
   <!-- Reverse Blob Image (Hidden initially) -->
-  <img
-    #reverseBlobRef
-    src="assets/3d_shape/25.webp"
-    alt="Reverse 3D blob"
+  <img #reverseBlobRef src="assets/3d_shape/25.webp" alt="Reverse 3D blob"
     class="fixed z-20 pointer-events-none select-none will-change-transform w-[85vw] sm:w-[65vw] max-w-[900px] sm:max-w-[700px]"
-    style="opacity: 0; left: 0; top: 0;"
-  />
+    style="opacity: 0; left: 0; top: 0;" />
 
   <!-- Espacio para el scroll (extendido para las nuevas animaciones) -->
   <div [style.height.px]="SKILLS_SCROLL_HEIGHT" aria-hidden="true"></div>

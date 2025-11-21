@@ -1,1 +1,29 @@
+/* Global scrollbar styling (light and dark) */
+:root {
+    --scrollbar-thumb: var(--color-neutral-300);
+    --scrollbar-track: transparent;
+}
 
+.dark {
+    --scrollbar-thumb: var(--color-neutral-700);
+}
+
+/* Firefox */
+* {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* WebKit */
+*::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+}
