@@ -62,6 +62,7 @@ export class Skills implements AfterViewInit, OnDestroy {
   @ViewChild('sectionRef', { static: false }) sectionRef!: ElementRef<HTMLElement>;
   @ViewChild('titleRef', { static: false }) titleRef!: ElementRef<HTMLElement>;
   @ViewChild('skillInfo', { static: false }) skillInfo!: ElementRef<HTMLElement>;
+  @ViewChild('reverseBlobRef', { static: false }) reverseBlobRef!: ElementRef<HTMLImageElement>;
   @ViewChildren('bubbleImg') bubbleImgs!: QueryList<ElementRef<HTMLImageElement>>;
   @ViewChildren('bubbleIcon') bubbleIcons!: QueryList<ElementRef<HTMLImageElement>>;
   @ViewChildren('bubbleContainer') bubbleContainers!: QueryList<ElementRef<HTMLDivElement>>;
@@ -71,8 +72,32 @@ export class Skills implements AfterViewInit, OnDestroy {
   private phase1ScrollTrigger?: ScrollTrigger; // Fase 1: Skills sube, icons aparecen, bubbles se centran
   private phase2ScrollTrigger?: ScrollTrigger; // Fase 2: Todo quieto (punto de anclaje)
   private phase3ScrollTrigger?: ScrollTrigger; // Fase 3: Skills desaparece, bubbles se distribuyen
+  private phase4ScrollTrigger?: ScrollTrigger; // Fase 4: Bubbles regresan al centro (cluster)
+  private phase5ScrollTrigger?: ScrollTrigger; // Fase 5: Bubbles -> Blob 25 -> Blob 01
   private skillInfoScrollTrigger?: ScrollTrigger;
   private interactionCleanups: Array<() => void> = [];
+  
+  private updateReverseBlobPositionBound = () => {
+    if (this.reverseBlobRef?.nativeElement) {
+      const isMobile = this.config.isMobile();
+      const reverseBlob = this.reverseBlobRef.nativeElement;
+      // Usar dimensiones esperadas si el DOM aún no reporta tamaño (fallback)
+      const expected = this.config.calculateExpectedBlobDimensions();
+      const blobWidth = reverseBlob.offsetWidth || expected.width;
+      const blobHeight = reverseBlob.offsetHeight || expected.height;
+
+      const viewportCenterX = window.innerWidth / 2;
+      const viewportCenterY = this.config.getAdjustedCenterY();
+      
+      gsap.set(reverseBlob, {
+        x: viewportCenterX - (blobWidth / 2),
+        y: viewportCenterY - (blobHeight / 2),
+        scale: this.config.BLOB_SCALE,
+        rotation: this.config.getFinalRotation(isMobile),
+        force3D: true
+      });
+    }
+  };
 
   // Señal para el skill seleccionado
   selectedSkill = signal<SkillData>({
@@ -114,6 +139,8 @@ export class Skills implements AfterViewInit, OnDestroy {
       this.setupPhase1Animation();
       this.setupPhase2Animation();
       this.setupPhase3Animation();
+      this.setupPhase4Animation();
+      this.setupPhase5Animation();
       this.clearInteractionListeners();
       this.setupBubbleInteractions();
     };
@@ -124,6 +151,17 @@ export class Skills implements AfterViewInit, OnDestroy {
     // También ejecutar después de un pequeño delay para asegurar que las dimensiones estén disponibles
     requestAnimationFrame(() => waitForBlobDimensions());
     setTimeout(() => waitForBlobDimensions(), 100);
+    setTimeout(() => waitForBlobDimensions(), 500); // Extra check for mobile
+
+    // Ensure reverse blob is positioned correctly once loaded
+    if (this.reverseBlobRef?.nativeElement) {
+      const img = this.reverseBlobRef.nativeElement;
+      if (!img.complete) {
+        img.addEventListener('load', this.updateReverseBlobPositionBound, { once: true });
+      } else {
+        this.updateReverseBlobPositionBound();
+      }
+    }
   }
 
   private resizeTimeout: any;
@@ -141,12 +179,15 @@ export class Skills implements AfterViewInit, OnDestroy {
       this.setupPhase1Animation();
       this.setupPhase2Animation();
       this.setupPhase3Animation();
+      this.setupPhase4Animation();
+      this.setupPhase5Animation();
       this.clearInteractionListeners();
       this.setupBubbleInteractions();
 
       // Refresh de ScrollTrigger para recalcular posiciones
       ScrollTrigger.refresh();
-    }, 100);
+      this.updateReverseBlobPositionBound();
+    }, 250); // Increased debounce for mobile stability
   }
 
   private getNavbarHeight(): number {
@@ -182,6 +223,27 @@ export class Skills implements AfterViewInit, OnDestroy {
     if (scale <= 0 || !isFinite(scale)) {
       console.warn('Invalid scale calculated:', scale, 'Using fallback 1.0');
       scale = 1.0;
+    }
+
+    // Ensure reverse blob matches these dimensions if it exists
+    if (this.reverseBlobRef?.nativeElement) {
+      const reverseBlob = this.reverseBlobRef.nativeElement;
+      
+      // Pre-calculate position to avoid jump on first scroll
+      const expected = this.config.calculateExpectedBlobDimensions();
+      const blobWidth = reverseBlob.offsetWidth || expected.width;
+      const blobHeight = reverseBlob.offsetHeight || expected.height;
+      
+      const viewportCenterX = window.innerWidth / 2;
+      const viewportCenterY = this.config.getAdjustedCenterY();
+      
+      gsap.set(reverseBlob, {
+        x: viewportCenterX - (blobWidth / 2),
+        y: viewportCenterY - (blobHeight / 2),
+        scale: this.config.BLOB_SCALE,
+        rotation: this.config.getFinalRotation(isMobile),
+        force3D: true
+      });
     }
 
     // Calcular el centro donde debe estar el blob
@@ -542,6 +604,183 @@ export class Skills implements AfterViewInit, OnDestroy {
     });
   }
 
+  // FASE 4: Bubbles regresan al centro (cluster) y se ocultan iconos/texto
+  private setupPhase4Animation(): void {
+    const section = this.sectionRef?.nativeElement;
+    const skillInfo = this.skillInfo?.nativeElement;
+    if (!section) return;
+
+    if (this.phase4ScrollTrigger) {
+      this.phase4ScrollTrigger.kill();
+      this.phase4ScrollTrigger = undefined;
+    }
+
+    const isMobile = this.config.isMobile();
+    const layout = this.config.getSkillsLayoutConfig(isMobile);
+    const availableWidth = window.innerWidth;
+    const availableHeight = window.innerHeight - layout.navbarHeight;
+
+    this.phase4ScrollTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: `top center-=${isMobile ? 1500 : 1900}`,
+      end: `+=${isMobile ? 800 : 1000}`,
+      scrub: true,
+      markers: false,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        // 1. Ocultar texto (skillInfo) rápidamente al inicio
+        if (skillInfo) {
+          gsap.set(skillInfo, { opacity: Math.max(0, 1 - self.progress * 4) });
+        }
+
+        // 2. Bubbles regresan a su posición original (cluster)
+        if (this.bubbleContainers) {
+          this.bubbleContainers.forEach((containerRef, index) => {
+            const container = containerRef.nativeElement;
+            const bubble = this.bubbles[index];
+            const skill = this.getSkill(bubble, isMobile);
+
+            if (skill) {
+              const skillIndex = this.bubbles.slice(0, index + 1).filter(b => this.getSkill(b, isMobile)).length - 1;
+
+              // Recalcular posición final de Fase 3 (donde empieza Fase 4)
+              // Esto es necesario porque scrub interpola desde el estado actual
+              // Pero necesitamos saber desde dónde venimos exactamente
+              
+              // ...existing logic from Phase 3 to calculate start positions...
+              // Simplificación: Phase 3 deja las bubbles en su posición distribuida.
+              // Phase 4 las lleva de vuelta a bubble.x / bubble.y
+              
+              // Calcular posición distribuida (Phase 3 end state)
+              let startX = bubble.x;
+              let startY = bubble.y; // Fallback
+
+              // Calcular startY de la Fase 2 (distribución orgánica)
+              const allSkillBubbles = this.bubbles.filter(b => this.getSkill(b, isMobile));
+              const minY = Math.min(...allSkillBubbles.map(b => b.y));
+              const maxY = Math.max(...allSkillBubbles.map(b => b.y + b.height));
+              const currentCenterY = (minY + maxY) / 2;
+              const targetCenterY = layout.bubblesTopY + layout.bubblesAreaHeight / 2;
+              const groupOffset = targetCenterY - currentCenterY;
+              const phase2Y = bubble.y + groupOffset;
+
+              if (isMobile) {
+                const mobilePos = MOBILE_POSITIONS[skillIndex];
+                const margin = 20;
+                const lowerHalfStart = layout.navbarHeight + (availableHeight / 2);
+                const lowerHalfHeight = availableHeight / 2;
+                startX = margin + mobilePos.x * (availableWidth - margin * 2 - bubble.width);
+                startY = lowerHalfStart + margin + mobilePos.y * (lowerHalfHeight - margin * 2 - bubble.height);
+              } else {
+                const desktopPos = DESKTOP_POSITIONS[skillIndex];
+                const rightHalfStart = availableWidth / 2;
+                const rightHalfWidth = availableWidth / 2;
+                const margin = 60;
+                startX = rightHalfStart + margin + desktopPos.x * (rightHalfWidth - margin * 2);
+                startY = layout.navbarHeight + margin + desktopPos.y * (availableHeight - margin * 2);
+              }
+
+              // Interpolar desde posición distribuida (startX, startY) a posición original (bubble.x, bubble.y)
+              const currentX = startX + (bubble.x - startX) * self.progress;
+              const currentY = startY + (bubble.y - startY) * self.progress;
+
+              gsap.set(container, {
+                x: currentX,
+                y: currentY,
+                opacity: 1,
+              });
+
+              // Ocultar iconos progresivamente
+              const iconRef = this.bubbleIcons.toArray()[skillIndex];
+              if (iconRef) {
+                gsap.set(iconRef.nativeElement, {
+                  opacity: Math.max(0, 1 - self.progress * 2), // Desaparecen rápido
+                  rotation: isMobile ? 0 : this.config.getFinalRotation(isMobile),
+                });
+              }
+            } else {
+              // Bubbles sin skill (que desaparecieron en Fase 1/2)
+              // Deben regresar desde abajo hacia su posición original
+              
+              // Posición inicial (donde terminaron en Fase 1/2)
+              const startY = bubble.y + (window.innerHeight * 1.5);
+              
+              // Interpolar hacia bubble.y
+              const currentY = startY + (bubble.y - startY) * self.progress;
+              
+              gsap.set(container, {
+                x: bubble.x,
+                y: currentY,
+                opacity: self.progress, // Aparecen progresivamente
+              });
+            }
+          });
+        }
+      }
+    });
+  }
+
+  // FASE 5: Bubbles desaparecen, aparece Blob y secuencia inversa 25 -> 01
+  private setupPhase5Animation(): void {
+    const section = this.sectionRef?.nativeElement;
+    const reverseBlob = this.reverseBlobRef?.nativeElement;
+    if (!section || !reverseBlob) return;
+
+    if (this.phase5ScrollTrigger) {
+      this.phase5ScrollTrigger.kill();
+      this.phase5ScrollTrigger = undefined;
+    }
+
+    const isMobile = this.config.isMobile();
+    const totalImages = 25;
+
+    this.phase5ScrollTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: `top center-=${isMobile ? 2300 : 2900}`,
+      end: `+=${isMobile ? 800 : 1000}`,
+      scrub: true,
+      markers: false,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        // 1. Bubbles desaparecen (fade out) y Blob aparece (fade in)
+        // Transición rápida al inicio de la fase
+        const fadeProgress = Math.min(1, self.progress * 5); // Primer 20% del scroll
+        
+        if (this.bubbleContainers) {
+          this.bubbleContainers.forEach((containerRef) => {
+            gsap.set(containerRef.nativeElement, { opacity: 1 - fadeProgress });
+          });
+        }
+        
+        // Calcular posición centrada igual que en About
+        // Usar dimensiones del config para consistencia y robustez (especialmente en mobile)
+        const expected = this.config.calculateExpectedBlobDimensions();
+        const blobWidth = reverseBlob.offsetWidth || expected.width;
+        const blobHeight = reverseBlob.offsetHeight || expected.height;
+        
+        const viewportCenterX = window.innerWidth / 2;
+        const viewportCenterY = this.config.getAdjustedCenterY();
+        
+        gsap.set(reverseBlob, { 
+          opacity: fadeProgress,
+          scale: this.config.BLOB_SCALE,
+          rotation: this.config.getFinalRotation(isMobile),
+          x: viewportCenterX - (blobWidth / 2),
+          y: viewportCenterY - (blobHeight / 2),
+          force3D: true,
+        });
+
+        // 2. Secuencia de imágenes inversa: 25 -> 01
+        // El progreso de la secuencia debe ser durante toda la fase
+        const imageIndex = Math.floor((1 - self.progress) * totalImages) + 1;
+        const clampedIndex = Math.min(Math.max(imageIndex, 1), totalImages);
+        const imageNumber = String(clampedIndex).padStart(2, '0');
+        
+        reverseBlob.src = `assets/3d_shape/${imageNumber}.webp`;
+      }
+    });
+  }
+
   private setupBubblesAnimation(): void {
     const section = this.sectionRef?.nativeElement;
     const title = this.titleRef?.nativeElement;
@@ -793,6 +1032,12 @@ export class Skills implements AfterViewInit, OnDestroy {
     }
     if (this.phase3ScrollTrigger) {
       this.phase3ScrollTrigger.kill();
+    }
+    if (this.phase4ScrollTrigger) {
+      this.phase4ScrollTrigger.kill();
+    }
+    if (this.phase5ScrollTrigger) {
+      this.phase5ScrollTrigger.kill();
     }
     if (this.skillInfoScrollTrigger) {
       this.skillInfoScrollTrigger.kill();
