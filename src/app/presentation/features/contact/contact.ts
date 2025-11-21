@@ -94,11 +94,12 @@ export class Contact implements AfterViewInit, OnDestroy {
       const left = centerX - width / 2;
       const top = centerY - height / 2;
 
+      const isMobile = window.innerWidth < 640;
       gsap.set(blob, {
         left,
         top,
         scale,
-        rotate: 90,
+        rotate: isMobile ? 90 : 0,
         transformOrigin: 'center center',
       });
     };

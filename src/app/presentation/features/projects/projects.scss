@@ -19,8 +19,3 @@ dialog ::-webkit-scrollbar-thumb {
 dialog ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
-
-/* Glassmorphism utilities if not in Tailwind config */
-.backdrop-blur-md {
-  backdrop-filter: blur(12px);
-}

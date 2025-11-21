@@ -126,10 +126,13 @@ export class StarfieldComponent implements AfterViewInit, OnDestroy {
       // Actualizar posición de scroll
       star.currentTop = star.originalTop - scrollY;
 
+      // Sistema de wrap infinito: cuando sale por un lado, actualizar también originalTop
       if (star.currentTop < -this.tileHeight) {
+        star.originalTop += this.tileHeight * 3;
         star.currentTop += this.tileHeight * 3;
       }
       else if (star.currentTop > this.tileHeight * 2) {
+        star.originalTop -= this.tileHeight * 3;
         star.currentTop -= this.tileHeight * 3;
       }
 
