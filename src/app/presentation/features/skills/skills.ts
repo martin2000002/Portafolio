@@ -741,14 +741,20 @@ export class Skills implements AfterViewInit, OnDestroy {
       scrub: true,
       markers: false,
       invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        // 1. Bubbles desaparecen (fade out) y Blob aparece (fade in)
-        // Transición rápida al inicio de la fase
-        const fadeProgress = Math.min(1, self.progress * 5); // Primer 20% del scroll
-        
+      onLeaveBack: () => {
+        // Al regresar a Fase 4, ocultar blob y mostrar bubbles
+        gsap.set(reverseBlob, { opacity: 0 });
         if (this.bubbleContainers) {
           this.bubbleContainers.forEach((containerRef) => {
-            gsap.set(containerRef.nativeElement, { opacity: 1 - fadeProgress });
+            gsap.set(containerRef.nativeElement, { opacity: 1 });
+          });
+        }
+      },
+      onUpdate: (self) => {
+        // 1. Bubbles desaparecen inmediatamente y Blob aparece inmediatamente
+        if (this.bubbleContainers) {
+          this.bubbleContainers.forEach((containerRef) => {
+            gsap.set(containerRef.nativeElement, { opacity: 0 });
           });
         }
         
@@ -762,7 +768,7 @@ export class Skills implements AfterViewInit, OnDestroy {
         const viewportCenterY = this.config.getAdjustedCenterY();
         
         gsap.set(reverseBlob, { 
-          opacity: fadeProgress,
+          opacity: 1,
           scale: this.config.BLOB_SCALE,
           rotation: this.config.getFinalRotation(isMobile),
           x: viewportCenterX - (blobWidth / 2),
