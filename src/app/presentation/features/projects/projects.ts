@@ -148,7 +148,8 @@ export class Projects implements AfterViewInit, OnDestroy {
     },
   ];
 
-  private scrollTrigger?: ScrollTrigger;
+  private contentScrollTrigger?: ScrollTrigger;
+  private blobScrollTrigger?: ScrollTrigger;
   private contactScrollTrigger?: ScrollTrigger;
   private contactFloatTween?: gsap.core.Tween;
   private blobDimensions = { width: 0, height: 0 };
@@ -161,6 +162,7 @@ export class Projects implements AfterViewInit, OnDestroy {
     gsap.registerPlugin(ScrollTrigger);
     this.setupBlobPosition();
     this.setupScrollAnimation();
+    this.setupProjectsTransition();
     this.setupContactTransition();
     document.addEventListener('skills-blob-finished', this.onSkillsBlobFinished);
     document.addEventListener('skills-blob-reset', this.onSkillsBlobReset);
@@ -239,14 +241,14 @@ export class Projects implements AfterViewInit, OnDestroy {
     });
 
     // Animate content up to calculated position
-    tl.to(content, { 
-      y: finalContainerY, 
-      opacity: 1, 
+    tl.to(content, {
+      y: finalContainerY,
+      opacity: 1,
       duration: 1,
       ease: 'power1.out'
     });
 
-    this.scrollTrigger = tl.scrollTrigger;
+    this.contentScrollTrigger = tl.scrollTrigger;
 
   }
 
@@ -282,6 +284,7 @@ export class Projects implements AfterViewInit, OnDestroy {
     const startX = detail.centerX - width / 2;
     const startY = detail.centerY - height / 2;
 
+    // Establecer el blob en la posición de skills
     gsap.set(blob, {
       opacity: 1,
       x: startX,
@@ -290,7 +293,8 @@ export class Projects implements AfterViewInit, OnDestroy {
       rotation: detail.rotation,
     });
     this.lastBlobPosition = { x: startX, y: startY };
-    this.moveBlobToProjectsState();
+
+    // La animación se manejará automáticamente por setupProjectsTransition
   }
 
   private handleSkillsBlobReset(): void {
@@ -301,24 +305,33 @@ export class Projects implements AfterViewInit, OnDestroy {
 
   private getProjectsBlobTarget(): { centerX: number; centerY: number; scale: number } {
     const cards = this.cardsRef?.nativeElement;
+    const isMobile = window.innerWidth < 768;
+    const centerX = window.innerWidth / 2; // Siempre centrado horizontalmente
+
     if (cards) {
       const rect = cards.getBoundingClientRect();
-      const width = window.innerWidth;
-      const centerX = rect.left + rect.width / 2;
 
-      if (width < 768) {
-        const centerY = rect.top + rect.height / 2;
+      if (isMobile) {
+        // Mobile: blob debajo de las cards, centrado horizontalmente
+        const blobHeight = this.getBlobDimensions().height;
         const scale = this.config.BLOB_SCALE * 0.66;
+        const scaledBlobHeight = blobHeight * scale;
+        const spacing = 80; // Espacio entre cards y blob
+        // Calcular centerY relativo al viewport (no absoluto)
+        const centerY = rect.bottom + spacing + scaledBlobHeight / 2;
         return { centerX, centerY, scale };
       }
 
-      const gap = Math.min(window.innerHeight * 0.12, 140);
-      const centerY = Math.min(rect.bottom + gap, window.innerHeight - 80);
-      const scale = this.config.BLOB_SCALE * (width >= 1280 ? 0.78 : 0.74);
+      // Desktop: blob centrado verticalmente en el viewport
+      const navbarHeight = this.config.getNavbarHeight();
+      const availableHeight = window.innerHeight - navbarHeight;
+      const centerY = navbarHeight + availableHeight / 2;
+      const scale = this.config.BLOB_SCALE * (window.innerWidth >= 1280 ? 0.78 : 0.74);
       return { centerX, centerY, scale };
     }
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight * 0.7;
+
+    // Fallback: centro del viewport
+    const centerY = this.config.getAdjustedCenterY();
     const scale = this.config.BLOB_SCALE * 0.78;
     return { centerX, centerY, scale };
   }
@@ -331,26 +344,37 @@ export class Projects implements AfterViewInit, OnDestroy {
       const scaledWidth = width * scale;
       const margin = 48;
       const centerX = Math.min(window.innerWidth - scaledWidth / 2 - margin, window.innerWidth - 180);
+
+      // Calcular centerY basado en la posición absoluta del card, no relativa al viewport
       const contactCard = document.getElementById('contact-card');
-      const contactAnchor = contactCard ?? document.getElementById('contact');
       let centerY = window.innerHeight / 2;
-      if (contactAnchor) {
-        const rect = contactAnchor.getBoundingClientRect();
-        centerY = rect.top + rect.height / 2;
+
+      if (contactCard) {
+        const rect = contactCard.getBoundingClientRect();
+        const cardTop = rect.top + window.scrollY; // Posición absoluta en la página
+        const cardHeight = rect.height;
+        const viewportCenter = window.innerHeight / 2;
+
+        // El blob debe estar centrado verticalmente con el card
+        // Calculamos la posición Y del centro del card en coordenadas de viewport
+        centerY = viewportCenter;
       }
-      const upperBound = window.innerHeight * 0.35;
-      const lowerBound = window.innerHeight * 0.65;
-      centerY = Math.min(Math.max(centerY, upperBound), lowerBound);
+
       return { centerX, centerY, scale };
     }
 
+    // Mobile: blob debajo del card, centrado horizontalmente
     const mobileScale = this.config.BLOB_SCALE * 0.62;
-    let centerY = window.innerHeight - 120;
-    const mobileAnchor = document.getElementById('contact-card') ?? document.getElementById('contact');
-    if (mobileAnchor) {
-      const rect = mobileAnchor.getBoundingClientRect();
-      centerY = Math.min(rect.bottom + 20, window.innerHeight - 80);
+    const contactCard = document.getElementById('contact-card');
+    let centerY = window.innerHeight * 0.75;
+
+    if (contactCard) {
+      const rect = contactCard.getBoundingClientRect();
+      const blobHeight = this.getBlobDimensions().height * mobileScale;
+      const spacing = 40; // Espacio entre el card y el blob
+      centerY = rect.bottom + spacing + blobHeight / 2;
     }
+
     return {
       centerX: window.innerWidth / 2,
       centerY,
@@ -366,25 +390,86 @@ export class Projects implements AfterViewInit, OnDestroy {
     };
   }
 
-  private moveBlobToProjectsState(): void {
-    const { centerX, centerY, scale } = this.getProjectsBlobTarget();
-    this.stopContactFloat();
-    gsap.set(this.blobRef.nativeElement, { opacity: 1 });
-    this.moveBlobTo(centerX, centerY, scale);
+  private setupProjectsTransition(): void {
+    if (this.blobScrollTrigger) {
+      this.blobScrollTrigger.kill();
+      this.blobScrollTrigger = undefined;
+    }
+
+    const section = this.sectionRef.nativeElement;
+    const blob = this.blobRef.nativeElement;
+
+    // Obtener posiciones de inicio (skills) y final (projects)
+    const skillsTarget = this.getSkillsBlobTarget();
+    const projectsTarget = this.getProjectsBlobTarget();
+    const { width, height } = this.getBlobDimensions();
+
+    const skillsX = skillsTarget.centerX - width / 2;
+    const skillsY = skillsTarget.centerY - height / 2;
+    const projectsX = projectsTarget.centerX - width / 2;
+    const projectsY = projectsTarget.centerY - height / 2;
+
+    // Crear una única animación reversible
+    this.blobScrollTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: 'top bottom',
+      end: 'top center',
+      scrub: true,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        const progress = self.progress;
+
+        // Interpolar posición
+        const currentX = skillsX + (projectsX - skillsX) * progress;
+        const currentY = skillsY + (projectsY - skillsY) * progress;
+        const currentScale = skillsTarget.scale + (projectsTarget.scale - skillsTarget.scale) * progress;
+
+        gsap.set(blob, {
+          x: currentX,
+          y: currentY,
+          scale: currentScale,
+          opacity: 1
+        });
+
+        this.lastBlobPosition = { x: currentX, y: currentY };
+      },
+      onEnter: () => {
+        // Al entrar desde arriba, asegurar que el blob esté visible
+        gsap.set(blob, { opacity: 1 });
+      },
+      onLeave: () => {
+        // Al salir hacia abajo (entrando a projects completamente)
+        gsap.set(blob, {
+          x: projectsX,
+          y: projectsY,
+          scale: projectsTarget.scale,
+          opacity: 1
+        });
+        this.lastBlobPosition = { x: projectsX, y: projectsY };
+      },
+      onEnterBack: () => {
+        // Al volver desde contact hacia projects, mostrar el blob
+        gsap.set(blob, { opacity: 1 });
+      },
+      onLeaveBack: () => {
+        // Al regresar hacia arriba (volviendo a skills) - ocultar inmediatamente
+        gsap.set(blob, { opacity: 0 });
+        this.lastBlobPosition = { x: skillsX, y: skillsY };
+        // Notificar a skills que tome control del blob
+        this.emitSkillsBlobTakeover();
+      }
+    });
   }
 
-  private moveBlobToContactState(): void {
-    const target = this.getContactBlobTarget();
-    gsap.set(this.blobRef.nativeElement, { opacity: 1 });
-    this.moveBlobTo(target.centerX, target.centerY, target.scale);
-    this.startContactFloat();
+  private emitSkillsBlobTakeover(): void {
+    document.dispatchEvent(new Event('projects-blob-takeover'));
   }
 
   private startContactFloat(): void {
     this.stopContactFloat();
     const baseY = this.lastBlobPosition.y;
     this.contactFloatTween = gsap.to(this.blobRef.nativeElement, {
-      y: baseY + 12,
+      y: baseY + 15,
       duration: 2.6,
       repeat: -1,
       yoyo: true,
@@ -401,39 +486,95 @@ export class Projects implements AfterViewInit, OnDestroy {
   }
 
   private setupContactTransition(): void {
-    if (this.contactScrollTrigger) return;
+    if (this.contactScrollTrigger) {
+      this.contactScrollTrigger.kill();
+      this.contactScrollTrigger = undefined;
+    }
+
     const contactSection = document.getElementById('contact');
     if (!contactSection) {
       setTimeout(() => this.setupContactTransition(), 200);
       return;
     }
 
+    const blob = this.blobRef.nativeElement;
+    const projectsTarget = this.getProjectsBlobTarget();
+    const contactTarget = this.getContactBlobTarget();
+    const { width, height } = this.getBlobDimensions();
+
+    const projectsX = projectsTarget.centerX - width / 2;
+    const projectsY = projectsTarget.centerY - height / 2;
+    const contactX = contactTarget.centerX - width / 2;
+    const contactY = contactTarget.centerY - height / 2;
+
     this.contactScrollTrigger = ScrollTrigger.create({
       trigger: contactSection,
       start: 'top center',
-      end: 'bottom center',
-      onEnter: () => this.moveBlobToContactState(),
-      onLeaveBack: () => this.moveBlobToProjectsState(),
+      end: 'top top+=200',
+      scrub: true,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        const progress = self.progress;
+        const currentX = projectsX + (contactX - projectsX) * progress;
+        const currentY = projectsY + (contactY - projectsY) * progress;
+        const currentScale = projectsTarget.scale + (contactTarget.scale - projectsTarget.scale) * progress;
+
+        gsap.set(blob, {
+          x: currentX,
+          y: currentY,
+          scale: currentScale,
+          opacity: 1
+        });
+
+        this.lastBlobPosition = { x: currentX, y: currentY };
+
+        // Iniciar float solo cuando estamos cerca del final
+        if (progress > 0.85 && !this.contactFloatTween) {
+          this.startContactFloat();
+        } else if (progress <= 0.85 && this.contactFloatTween) {
+          this.stopContactFloat();
+        }
+      },
+      onLeave: () => {
+        // Al completar la transición, mantener el blob visible con float
+        gsap.set(blob, {
+          x: contactX,
+          y: contactY,
+          scale: contactTarget.scale,
+          opacity: 1
+        });
+        this.lastBlobPosition = { x: contactX, y: contactY };
+        if (!this.contactFloatTween) {
+          this.startContactFloat();
+        }
+      },
+      onEnter: () => {
+        // Al entrar al trigger desde arriba, asegurar visibilidad
+        if (!this.contactFloatTween) {
+          gsap.set(blob, { opacity: 1 });
+        }
+      },
+      onLeaveBack: () => {
+        // Al regresar hacia projects
+        this.stopContactFloat();
+        gsap.set(blob, {
+          x: projectsX,
+          y: projectsY,
+          scale: projectsTarget.scale,
+          opacity: 1
+        });
+        this.lastBlobPosition = { x: projectsX, y: projectsY };
+      }
     });
   }
 
   private handleSkillsBlobTakeover(): void {
+    // Este evento ya no se usa, la animación es reversible automáticamente
+    // Solo necesitamos ocultar el blob y resetear
     if (!this.blobRef?.nativeElement) return;
     const blob = this.blobRef.nativeElement;
-    const { centerX, centerY, scale } = this.getSkillsBlobTarget();
-    const { width, height } = this.getBlobDimensions();
-    const x = centerX - width / 2;
-    const y = centerY - height / 2;
     this.stopContactFloat();
-    this.lastBlobPosition = { x, y };
-    gsap.to(blob, {
-      x,
-      y,
-      scale,
-      opacity: 0,
-      duration: 0.65,
-      ease: 'power2.inOut',
-    });
+    gsap.set(blob, { opacity: 0 });
   }
 
   openProject(project: Project): void {
@@ -473,7 +614,8 @@ export class Projects implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.scrollTrigger?.kill();
+    this.contentScrollTrigger?.kill();
+    this.blobScrollTrigger?.kill();
     this.contactScrollTrigger?.kill();
     this.contactFloatTween?.kill();
     document.removeEventListener('skills-blob-finished', this.onSkillsBlobFinished);

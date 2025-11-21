@@ -10,65 +10,68 @@
     <div #formRef class="w-full opacity-0">
       <div
         id="contact-card"
-        class="max-w-[520px] mx-auto bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200 dark:border-white/10 rounded-3xl p-6 md:p-10 shadow-2xl max-h-[calc(100vh-200px)] overflow-y-auto"
+        class="max-w-[620px] w-full mx-auto bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200 dark:border-white/10 rounded-3xl p-5 md:p-7 shadow-2xl"
       >
         <h2
-          class="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-white mb-4"
+          class="text-3xl md:text-4xl font-bold text-neutral-900 dark:text-white mb-2"
         >
           Contact
         </h2>
-        <p class="text-neutral-600 dark:text-neutral-300 mb-8">
+        <p class="text-sm text-neutral-600 dark:text-neutral-300 mb-5">
           Drop your info here or contact me at "martin200002@hotmail.com"
         </p>
 
-        <form class="space-y-5">
-          <!-- Full Name -->
-          <div>
-            <label
-              for="fullName"
-              class="block text-sm font-semibold text-neutral-700 dark:text-neutral-200 mb-2"
-            >
-              Full Name
-            </label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              class="w-full px-4 py-3 rounded-xl bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
-              placeholder="Enter your name"
-            />
-          </div>
+        <form class="space-y-4">
+          <!-- Name and Email in one row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Full Name -->
+            <div>
+              <label
+                for="fullName"
+                class="block text-sm font-semibold text-neutral-700 dark:text-neutral-200 mb-1.5"
+              >
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                class="w-full px-3 py-2.5 rounded-xl bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
+                placeholder="Enter your name"
+              />
+            </div>
 
-          <!-- Email Address -->
-          <div>
-            <label
-              for="email"
-              class="block text-sm font-semibold text-neutral-700 dark:text-neutral-200 mb-2"
-            >
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              class="w-full px-4 py-3 rounded-xl bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
-              placeholder="your@email.com"
-            />
+            <!-- Email Address -->
+            <div>
+              <label
+                for="email"
+                class="block text-sm font-semibold text-neutral-700 dark:text-neutral-200 mb-1.5"
+              >
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="w-full px-3 py-2.5 rounded-xl bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
+                placeholder="your@email.com"
+              />
+            </div>
           </div>
 
           <!-- Your Message -->
           <div>
             <label
               for="message"
-              class="block text-sm font-semibold text-neutral-700 dark:text-neutral-200 mb-2"
+              class="block text-sm font-semibold text-neutral-700 dark:text-neutral-200 mb-1.5"
             >
               Your Message
             </label>
             <textarea
               id="message"
               name="message"
-              rows="4"
-              class="w-full px-4 py-3 rounded-xl bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all resize-none"
+              rows="3"
+              class="w-full px-3 py-2.5 rounded-xl bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all resize-none"
               placeholder="Write your message here..."
             ></textarea>
           </div>
@@ -85,9 +88,9 @@
           >
             <lucide-icon
               [img]="Send"
-              class="w-5 h-5 transition-transform group-hover:translate-x-1"
+              class="w-5 h-5"
             ></lucide-icon>
-            Visit
+            Send
           </button>
         </form>
       </div>
