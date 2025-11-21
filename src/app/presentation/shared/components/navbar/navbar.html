@@ -44,7 +44,7 @@
   </div>
 
   @if (menuOpen()) {
-    <div #panel class="fixed right-4 top-22 md:top-24 z-60 w-[min(88vw,380px)] rounded-2xl border border-white/10 bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.25)] px-4 py-3 md:px-5 md:py-4">
+    <div #panel class="fixed right-4 top-22 md:top-24 z-60 w-[min(88vw,380px)] rounded-2xl border border-white/10 bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-[3px] shadow-[0_10px_30px_rgba(0,0,0,0.25)] px-4 py-3 md:px-5 md:py-4">
       <ul class="flex flex-col">
         @for (item of menuItems; track item.label) {
           <li>

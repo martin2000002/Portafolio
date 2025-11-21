@@ -1,16 +1,16 @@
 <section
   id="contact"
   #sectionRef
-  class="relative min-h-[90vh] w-full flex items-center justify-center py-16 px-4 md:px-6 lg:px-10"
+  class="relative min-h-[85vh] w-full flex items-center justify-center py-10 md:py-12 px-4 md:px-6 lg:px-10"
 >
   <div
-    class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_1fr] gap-10 items-center"
+    class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,560px)_1fr] gap-8 items-center"
   >
     <!-- Left: Form -->
     <div #formRef class="w-full opacity-0">
       <div
         id="contact-card"
-        class="max-w-[620px] w-full mx-auto bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200 dark:border-white/10 rounded-3xl p-5 md:p-7 shadow-2xl"
+        class="max-w-[640px] w-full mx-auto bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200 dark:border-white/10 rounded-3xl p-5 md:p-6 lg:p-7 shadow-2xl"
       >
         <h2
           class="text-3xl md:text-4xl font-bold text-neutral-900 dark:text-white mb-2"
@@ -84,7 +84,7 @@
           <!-- Submit Button -->
           <button
             type="submit"
-            class="group flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-neutral-900 dark:bg-white text-white dark:text-black font-bold rounded-full hover:bg-neutral-700 dark:hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+            class="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-neutral-900 dark:bg-white text-white dark:text-black font-bold rounded-full hover:bg-neutral-700 dark:hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl"
           >
             <lucide-icon
               [img]="Send"
@@ -97,9 +97,9 @@
     </div>
 
     <!-- Right placeholder for blob (desktop) -->
-    <div class="hidden lg:block min-h-[500px]"></div>
+    <div class="hidden lg:block min-h-[420px]"></div>
 
     <!-- Mobile spacer -->
-    <div class="lg:hidden block h-[140px]"></div>
+    <div class="lg:hidden block h-16"></div>
   </div>
 </section>
