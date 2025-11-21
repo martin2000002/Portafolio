@@ -47,6 +47,15 @@ interface Bubble extends BubbleConfig {
   y: number;
 }
 
+interface BlobSyncPayload {
+  centerX: number;
+  centerY: number;
+  width: number;
+  height: number;
+  scale: number;
+  rotation: number;
+}
+
 @Component({
   selector: 'app-skills',
   imports: [],
@@ -108,6 +117,14 @@ export class Skills implements AfterViewInit, OnDestroy {
   });
 
   constructor(private readonly config: BlobAnimationConfigService) {}
+
+  private emitSkillsBlobFinished(detail: BlobSyncPayload): void {
+    document.dispatchEvent(new CustomEvent<BlobSyncPayload>('skills-blob-finished', { detail }));
+  }
+
+  private emitSkillsBlobReset(): void {
+    document.dispatchEvent(new Event('skills-blob-reset'));
+  }
 
   // Helper para obtener la skill correcta según el modo (desktop/mobile)
   private getSkill(bubble: Bubble, isMobile: boolean): SkillData | undefined {
@@ -753,6 +770,19 @@ export class Skills implements AfterViewInit, OnDestroy {
 
     const isMobile = this.config.isMobile();
     const totalImages = 25;
+    const getBlobPayload = (): BlobSyncPayload => {
+      const expected = this.config.calculateExpectedBlobDimensions();
+      const blobWidth = reverseBlob.offsetWidth || expected.width;
+      const blobHeight = reverseBlob.offsetHeight || expected.height;
+      return {
+        centerX: window.innerWidth / 2,
+        centerY: this.config.getAdjustedCenterY(),
+        width: blobWidth,
+        height: blobHeight,
+        scale: this.config.BLOB_SCALE,
+        rotation: this.config.getFinalRotation(isMobile),
+      };
+    };
 
     // Reducir la duración del scroll para que no se sienta tan largo
     // Antes: 800/1000 -> Ahora: SEQUENCE_DURATION (match About speed)
@@ -766,9 +796,9 @@ export class Skills implements AfterViewInit, OnDestroy {
       markers: false,
       invalidateOnRefresh: true,
       onLeave: () => {
-        // Al terminar la fase (scrolleando hacia abajo), ocultar el blob
-        // para que el componente Projects tome el control con su propia imagen
+        // Al terminar la fase (scrolleando hacia abajo), ocultar blob inmediato y notificar a Projects
         gsap.set(reverseBlob, { opacity: 0 });
+        this.emitSkillsBlobFinished(getBlobPayload());
       },
       onLeaveBack: () => {
         // Al regresar a Fase 4, ocultar blob y mostrar bubbles
@@ -778,6 +808,7 @@ export class Skills implements AfterViewInit, OnDestroy {
             gsap.set(containerRef.nativeElement, { autoAlpha: 1 });
           });
         }
+        this.emitSkillsBlobReset();
       },
       onUpdate: (self) => {
         // 1. Bubbles desaparecen inmediatamente y Blob aparece inmediatamente

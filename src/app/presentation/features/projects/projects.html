@@ -1,7 +1,7 @@
-<section id="projects" #sectionRef class="relative min-h-screen w-full flex flex-col items-center justify-start py-20 overflow-hidden scroll-mt-0">
+<section id="projects" #sectionRef class="relative min-h-screen w-full flex flex-col items-center justify-start overflow-hidden scroll-mt-0">
   
-  <!-- Background Blob (Matches Skills final state) -->
-  <div class="fixed inset-0 pointer-events-none z-0">
+  <!-- Background Blob - Positioned behind everything with z-[-1] -->
+  <div class="fixed inset-0 pointer-events-none z-[-1]">
     <img #blobRef
          src="assets/3d_shape/01.webp" 
          alt="Background Blob" 
@@ -19,7 +19,7 @@
     </h2>
 
     <!-- Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-[85%] md:max-w-7xl">
+    <div #cardsRef class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-[85%] md:max-w-7xl">
       @for (project of projects; track project.id) {
         <div #projectCard 
              class="group relative bg-white/80 dark:bg-white/10 backdrop-blur-md border border-neutral-200 dark:border-white/20 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:border-primary-500/40 dark:hover:border-white/40"
@@ -68,9 +68,9 @@
     @if (selectedProject(); as project) {
       <div class="bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white w-full h-full max-h-[90vh] overflow-y-auto flex flex-col md:flex-row relative border border-neutral-200 dark:border-white/10">
         
-        <!-- Close Button -->
+        <!-- Close Button - Fixed en top-right -->
         <button (click)="closeModal()" 
-                class="sticky top-4 self-end z-50 p-2 mr-4 bg-white/80 dark:bg-black/50 hover:bg-neutral-200 dark:hover:bg-white/20 rounded-full transition-colors text-neutral-900 dark:text-white shadow-sm mb-[-40px]">
+                class="fixed top-4 right-4 z-50 p-2 bg-white/80 dark:bg-black/50 hover:bg-neutral-200 dark:hover:bg-white/20 rounded-full transition-colors text-neutral-900 dark:text-white shadow-sm">
           <lucide-icon [img]="X" class="w-6 h-6"></lucide-icon>
         </button>
 

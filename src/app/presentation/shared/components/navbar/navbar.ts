@@ -82,24 +82,22 @@ export class Navbar implements AfterViewInit, OnDestroy {
   }
 
   private scrollToProjects(): void {
+    // Usar la misma lógica que Skills para posicionar el título en navbar + 10px
     const projectsSection = document.getElementById('projects');
     if (!projectsSection) return;
 
-    // Ajustar el scroll para que el título quede en la posición correcta
-    // El componente Projects tiene una animación que coloca el título en navbarHeight + 10
-    // cuando la sección está en el top del viewport.
-    // Sin embargo, para asegurar que se vea bien y no se sienta "apretado",
-    // scrolleamos un poco menos para dejar margen.
+    const isMobile = window.innerWidth < 640;
+    const sectionTop = projectsSection.offsetTop;
+    const viewportCenter = window.innerHeight / 2;
     
-    const navbarHeight = 80; // Aproximado, o usar this.theme.getNavbarHeight() si existiera
-    const sectionTop = projectsSection.getBoundingClientRect().top + window.scrollY;
-    
-    // Scrollear a la posición de la sección menos un pequeño offset para que la animación
-    // no esté 100% terminada y se sienta más natural, o simplemente al top exacto.
-    // El usuario reportó que "manda más abajo", así que intentamos ajustar.
-    
+    // Projects tiene una animación que mueve el contenido desde 'top bottom' a 'top top+100'
+    // Para que el título quede en navbar + 10, necesitamos scrollear hasta que la sección
+    // esté en la posición 'top top+100' (similar a Skills Phase 2)
+    // Esto significa: sectionTop debe estar a 100px del top del viewport
+    const scrollPosition = sectionTop - 100;
+
     window.scrollTo({
-      top: sectionTop - 80, // Restar altura del navbar para que no tape el contenido
+      top: scrollPosition,
       behavior: 'smooth',
     });
   }
