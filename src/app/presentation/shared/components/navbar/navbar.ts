@@ -47,8 +47,11 @@ export class Navbar implements AfterViewInit, OnDestroy {
     // Esperar a que el menú se cierre antes de scrollear
     setTimeout(() => {
       if (sectionId === 'skills') {
-        // Para Skills, usar el punto de anclaje específico
         this.scrollToSkillsAnchor();
+      } else if (sectionId === 'projects') {
+        this.scrollToProjects();
+      } else if (sectionId === 'about') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         // Para otras secciones, scroll normal
         const section = document.getElementById(sectionId);
@@ -74,6 +77,29 @@ export class Navbar implements AfterViewInit, OnDestroy {
 
     window.scrollTo({
       top: scrollPosition,
+      behavior: 'smooth',
+    });
+  }
+
+  private scrollToProjects(): void {
+    const projectsSection = document.getElementById('projects');
+    if (!projectsSection) return;
+
+    // Ajustar el scroll para que el título quede en la posición correcta
+    // El componente Projects tiene una animación que coloca el título en navbarHeight + 10
+    // cuando la sección está en el top del viewport.
+    // Sin embargo, para asegurar que se vea bien y no se sienta "apretado",
+    // scrolleamos un poco menos para dejar margen.
+    
+    const navbarHeight = 80; // Aproximado, o usar this.theme.getNavbarHeight() si existiera
+    const sectionTop = projectsSection.getBoundingClientRect().top + window.scrollY;
+    
+    // Scrollear a la posición de la sección menos un pequeño offset para que la animación
+    // no esté 100% terminada y se sienta más natural, o simplemente al top exacto.
+    // El usuario reportó que "manda más abajo", así que intentamos ajustar.
+    
+    window.scrollTo({
+      top: sectionTop - 80, // Restar altura del navbar para que no tape el contenido
       behavior: 'smooth',
     });
   }

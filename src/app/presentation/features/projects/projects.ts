@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { LucideAngularModule, X, ExternalLink, Github, Code2, Terminal, Cpu, Brain } from 'lucide-angular';
+import { BlobAnimationConfigService } from '../../shared/services/blob-animation-config.service';
 
 interface ProjectImage {
   src: string;
@@ -47,6 +48,7 @@ export class Projects implements AfterViewInit, OnDestroy {
   @ViewChild('contentRef') contentRef!: ElementRef<HTMLElement>;
   @ViewChildren('projectCard') projectCards!: QueryList<ElementRef<HTMLElement>>;
   @ViewChild('modalRef') modalRef!: ElementRef<HTMLDialogElement>;
+  @ViewChild('blobRef') blobRef!: ElementRef<HTMLImageElement>;
 
   readonly X = X;
   readonly ExternalLink = ExternalLink;
@@ -57,6 +59,8 @@ export class Projects implements AfterViewInit, OnDestroy {
   readonly Brain = Brain;
 
   selectedProject = signal<Project | null>(null);
+
+  constructor(private readonly config: BlobAnimationConfigService) {}
 
   projects: Project[] = [
     {
@@ -138,58 +142,115 @@ export class Projects implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     gsap.registerPlugin(ScrollTrigger);
+    this.setupBlobPosition();
     this.setupScrollAnimation();
+  }
+
+  private setupBlobPosition(): void {
+    if (!this.blobRef?.nativeElement) return;
+    
+    const blob = this.blobRef.nativeElement;
+    const isMobile = this.config.isMobile();
+    
+    // Usar la misma lógica que en Skills para posicionar el blob
+    const expected = this.config.calculateExpectedBlobDimensions();
+    const blobWidth = blob.offsetWidth || expected.width;
+    const blobHeight = blob.offsetHeight || expected.height;
+    
+    const viewportCenterX = window.innerWidth / 2;
+    const viewportCenterY = this.config.getAdjustedCenterY();
+    
+    gsap.set(blob, {
+      x: viewportCenterX - (blobWidth / 2),
+      y: viewportCenterY - (blobHeight / 2),
+      scale: this.config.BLOB_SCALE,
+      rotation: this.config.getFinalRotation(isMobile),
+      force3D: true
+    });
   }
 
   private setupScrollAnimation(): void {
     const section = this.sectionRef.nativeElement;
     const content = this.contentRef.nativeElement;
-    const cards = this.projectCards.map(c => c.nativeElement);
+    const blob = this.blobRef.nativeElement;
 
-    // Initial state
+    // Initial state: Content starts below
     gsap.set(content, { y: 100, opacity: 0 });
-    gsap.set(cards, { y: 50, opacity: 0 });
+    
+    // Calculate target Y for the content container so that the title ends up at Navbar + 10px
+    const navbarHeight = this.config.getNavbarHeight();
+    
+    // Calculate dynamic offset to ensure precision
+    // We need the title's offset relative to the content container
+    const titleEl = content.querySelector('h2');
+    let titleOffset = 180; // Fallback (80px padding-top section + 100px padding-top content)
+    
+    if (titleEl) {
+      // Get styles to check for margins
+      const style = window.getComputedStyle(titleEl);
+      const marginTop = parseFloat(style.marginTop) || 0;
+      // The content container has pt-[100px] and section has py-20 (80px)
+      // So visually the title is at 180px + marginTop from the section top
+      titleOffset = 180 + marginTop;
+    }
 
-    this.scrollTrigger = ScrollTrigger.create({
-      trigger: section,
-      start: 'top center', // Adjust as needed based on where Skills ends
-      end: '+=100%',
-      pin: true,
-      scrub: 1,
-      onUpdate: (self) => {
-        // Animation logic based on scroll progress
-        const progress = self.progress;
-        
-        // Fade in content
-        if (progress < 0.2) {
-          gsap.to(content, { y: 0, opacity: 1, duration: 0.5, overwrite: true });
-        }
+    // Target Y = navbarHeight + 10
+    // We want: titleOffset + translateY = navbarHeight + 10
+    // translateY = (navbarHeight + 10) - titleOffset
+    const finalContainerY = (navbarHeight + 10) - titleOffset;
 
-        // Stagger cards appearance
-        if (progress > 0.1) {
-           gsap.to(cards, {
-             y: 0,
-             opacity: 1,
-             stagger: 0.1,
-             duration: 0.5,
-             overwrite: true
-           });
-        }
+    // Create a timeline for the scroll animation
+    // NO PINNING to avoid "sticky bottom" effect
+    // Animate as the section enters the viewport
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: section,
+        start: 'top bottom', // Start when section top hits viewport bottom
+        end: 'top top+=100', // End when section top is near top (adjusted for navbar)
+        scrub: 0.5,
+        invalidateOnRefresh: true
       }
     });
-    
-    // Alternative approach: Timeline linked to scrub
-    const tl = gsap.timeline({
-        scrollTrigger: {
-            trigger: section,
-            start: "top bottom", // When top of section hits bottom of viewport
-            end: "center center", // When center of section hits center of viewport
-            scrub: 1,
-        }
+
+    // Animate content up to calculated position
+    tl.to(content, { 
+      y: finalContainerY, 
+      opacity: 1, 
+      duration: 1,
+      ease: 'power1.out'
     });
 
-    tl.to(content, { y: 0, opacity: 1, duration: 1 })
-      .to(cards, { y: 0, opacity: 1, stagger: 0.2, duration: 1 }, "-=0.5");
+    this.scrollTrigger = tl.scrollTrigger;
+
+    // Separate trigger for blob visibility and animation
+    // Starts when Projects section reaches the top of the viewport (sync with Skills Phase 5 end)
+    ScrollTrigger.create({
+      trigger: section,
+      start: 'top top', 
+      end: 'bottom top', 
+      onEnter: () => {
+        // Instant appearance to match Skills end state (no fade)
+        gsap.set(blob, { opacity: 1 }); 
+        
+        // Animate scale (time-based, no scrub)
+        gsap.to(blob, {
+          scale: this.config.BLOB_SCALE * 0.8,
+          duration: 1.5,
+          ease: 'power2.out'
+        });
+      },
+      onLeave: () => gsap.to(blob, { opacity: 0, duration: 0.3 }),
+      onEnterBack: () => {
+        gsap.set(blob, { opacity: 1 });
+        // Restore scale if needed or let it stay
+      },
+      onLeaveBack: () => {
+        // Instant disappear to match Skills start state (no fade)
+        gsap.set(blob, { opacity: 0 }); 
+        // Reset scale for next entry
+        gsap.set(blob, { scale: this.config.BLOB_SCALE });
+      },
+    });
   }
 
   openProject(project: Project): void {

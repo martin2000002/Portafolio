@@ -369,7 +369,18 @@ export class BlobAnimationConfigService {
     const navbarHeight = this.getNavbarHeight();
     const titleMargin = 10;
     const availableHeight = window.innerHeight - navbarHeight;
-    const titleHeight = isMobile ? 80 : 150;
+    
+    // Calcular altura del título según breakpoints de Tailwind
+    let titleHeight = 150; // lg (>= 1024px)
+    const width = window.innerWidth;
+    
+    if (width < 640) { // < sm
+      titleHeight = 80;
+    } else if (width < 768) { // sm (>= 640px)
+      titleHeight = 130;
+    } else if (width < 1024) { // md (>= 768px)
+      titleHeight = 140;
+    }
 
     // Posición final del título: navbar bottom + 10px
     // La posición Y es relativa al centro del viewport (por el flex items-center)

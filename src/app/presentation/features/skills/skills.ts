@@ -126,6 +126,26 @@ export class Skills implements AfterViewInit, OnDestroy {
     return this.getSkill(bubble, isMobile);
   }
 
+  // Helper para obtener la altura total del scroll
+  get SKILLS_SCROLL_HEIGHT(): number {
+    const isMobile = this.config.isMobile();
+    // Suma de todas las duraciones de las fases
+    // Phase 1: isMobile ? 500 : 700
+    // Phase 2: 200
+    // Phase 3: isMobile ? 800 : 1000
+    // Phase 4: isMobile ? 800 : 1000
+    // Phase 5: SEQUENCE_DURATION (1250)
+    
+    const phase1 = isMobile ? 500 : 700;
+    const phase2 = 200;
+    const phase3 = isMobile ? 800 : 1000;
+    const phase4 = isMobile ? 800 : 1000;
+    const phase5 = this.config.SEQUENCE_DURATION;
+    
+    // Margen de seguridad al final
+    return phase1 + phase2 + phase3 + phase4 + phase5 + 100;
+  }
+
   bubbles: Bubble[] = BUBBLES as Bubble[];
 
   ngAfterViewInit(): void {
@@ -734,13 +754,22 @@ export class Skills implements AfterViewInit, OnDestroy {
     const isMobile = this.config.isMobile();
     const totalImages = 25;
 
+    // Reducir la duración del scroll para que no se sienta tan largo
+    // Antes: 800/1000 -> Ahora: SEQUENCE_DURATION (match About speed)
+    const phase5Duration = this.config.SEQUENCE_DURATION;
+    
     this.phase5ScrollTrigger = ScrollTrigger.create({
       trigger: section,
       start: `top center-=${isMobile ? 2300 : 2900}`,
-      end: `+=${isMobile ? 800 : 1000}`,
+      end: `+=${phase5Duration}`,
       scrub: true,
       markers: false,
       invalidateOnRefresh: true,
+      onLeave: () => {
+        // Al terminar la fase (scrolleando hacia abajo), ocultar el blob
+        // para que el componente Projects tome el control con su propia imagen
+        gsap.set(reverseBlob, { opacity: 0 });
+      },
       onLeaveBack: () => {
         // Al regresar a Fase 4, ocultar blob y mostrar bubbles
         gsap.set(reverseBlob, { opacity: 0 });
@@ -759,7 +788,6 @@ export class Skills implements AfterViewInit, OnDestroy {
         }
         
         // Calcular posición centrada igual que en About
-        // Usar dimensiones del config para consistencia y robustez (especialmente en mobile)
         const expected = this.config.calculateExpectedBlobDimensions();
         const blobWidth = reverseBlob.offsetWidth || expected.width;
         const blobHeight = reverseBlob.offsetHeight || expected.height;
@@ -777,7 +805,6 @@ export class Skills implements AfterViewInit, OnDestroy {
         });
 
         // 2. Secuencia de imágenes inversa: 25 -> 01
-        // El progreso de la secuencia debe ser durante toda la fase
         const imageIndex = Math.floor((1 - self.progress) * totalImages) + 1;
         const clampedIndex = Math.min(Math.max(imageIndex, 1), totalImages);
         const imageNumber = String(clampedIndex).padStart(2, '0');
