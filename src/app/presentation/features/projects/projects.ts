@@ -160,6 +160,7 @@ export class Projects implements AfterViewInit, OnDestroy {
   private blobDimensions = { width: 0, height: 0 };
   private lastBlobPosition = { x: 0, y: 0 };
   private resizeTimeout: any;
+  private blobTransitionEnabled = false;
   private readonly onSkillsBlobFinished = (event: Event) => this.handleSkillsBlobFinished(event as CustomEvent<BlobSyncPayload>);
   private readonly onSkillsBlobReset = () => this.handleSkillsBlobReset();
   private readonly onSkillsBlobTakeover = () => this.handleSkillsBlobTakeover();
@@ -315,6 +316,7 @@ export class Projects implements AfterViewInit, OnDestroy {
     if (!detail) return;
     const blob = this.blobRef.nativeElement;
     this.stopContactFloat();
+    this.blobTransitionEnabled = true;
     const { width, height } = this.getBlobDimensions();
     const startX = detail.centerX - width / 2;
     const startY = detail.centerY - height / 2;
@@ -329,12 +331,16 @@ export class Projects implements AfterViewInit, OnDestroy {
     });
     this.lastBlobPosition = { x: startX, y: startY };
 
+    this.blobScrollTrigger?.enable();
+    this.blobScrollTrigger?.refresh();
     // La animación se manejará automáticamente por setupProjectsTransition
   }
 
   private handleSkillsBlobReset(): void {
     const blob = this.blobRef.nativeElement;
     this.stopContactFloat();
+    this.blobTransitionEnabled = false;
+    this.blobScrollTrigger?.disable();
     gsap.set(blob, { opacity: 0 });
   }
 
@@ -390,20 +396,14 @@ export class Projects implements AfterViewInit, OnDestroy {
       return { centerX, centerY, scale };
     }
 
-    // Mobile: blob debajo del card, centrado horizontalmente
+    // Mobile: blob detrás del card, alineado con su centro
     const mobileScale = this.config.BLOB_SCALE * 0.62;
     const contactCard = document.getElementById('contact-card');
-    let centerY = window.innerHeight * 0.75;
+    let centerY = this.config.getAdjustedCenterY();
 
     if (contactCard) {
       const rect = contactCard.getBoundingClientRect();
-      const dims = this.getBlobDimensions();
-      const blobHeight = dims.height || this.config.calculateExpectedBlobDimensions().height;
-      const scaledBlobHeight = blobHeight * mobileScale;
-      const spacing = 40; // Espacio entre el card y el blob
-
-      // Calcular centerY relativo al viewport
-      centerY = rect.bottom + spacing + scaledBlobHeight / 2;
+      centerY = rect.top + rect.height / 2;
     }
 
     return {
@@ -448,6 +448,10 @@ export class Projects implements AfterViewInit, OnDestroy {
       scrub: true,
       invalidateOnRefresh: true,
       onUpdate: (self) => {
+        if (!this.blobTransitionEnabled) {
+          gsap.set(blob, { opacity: 0 });
+          return;
+        }
         const progress = self.progress;
 
         // Interpolar posición
@@ -480,7 +484,9 @@ export class Projects implements AfterViewInit, OnDestroy {
       },
       onEnterBack: () => {
         // Al volver desde contact hacia projects, mostrar el blob
-        gsap.set(blob, { opacity: 1 });
+        if (this.blobTransitionEnabled) {
+          gsap.set(blob, { opacity: 1 });
+        }
       },
       onLeaveBack: () => {
         // Al regresar hacia arriba (volviendo a skills) - ocultar inmediatamente
@@ -490,6 +496,10 @@ export class Projects implements AfterViewInit, OnDestroy {
         this.emitSkillsBlobTakeover();
       }
     });
+
+    if (!this.blobTransitionEnabled) {
+      this.blobScrollTrigger.disable();
+    }
   }
 
   private setupSkillsMonitor(): void {
@@ -573,6 +583,7 @@ export class Projects implements AfterViewInit, OnDestroy {
     const contactX = contactTarget.centerX - width / 2;
     const contactY = contactTarget.centerY - height / 2;
     const ease = gsap.parseEase('power2.inOut');
+    const isMobile = window.innerWidth < 1024;
 
     this.contactScrollTrigger = ScrollTrigger.create({
       trigger: contactSection,
@@ -581,6 +592,20 @@ export class Projects implements AfterViewInit, OnDestroy {
       scrub: true,
       invalidateOnRefresh: true,
       onUpdate: (self) => {
+        if (isMobile) {
+          const hideThreshold = 0.02;
+          const shouldHide = self.progress >= hideThreshold;
+          this.stopContactFloat();
+          gsap.set(blob, {
+            x: projectsX,
+            y: projectsY,
+            scale: projectsTarget.scale,
+            opacity: shouldHide ? 0 : 1,
+          });
+          this.lastBlobPosition = { x: projectsX, y: projectsY };
+          return;
+        }
+
         const easedProgress = ease(self.progress);
         const currentX = projectsX + (contactX - projectsX) * easedProgress;
         const currentY = projectsY + (contactY - projectsY) * easedProgress;
@@ -622,6 +647,8 @@ export class Projects implements AfterViewInit, OnDestroy {
     const blob = this.blobRef.nativeElement;
     this.stopContactFloat();
     gsap.set(blob, { opacity: 0 });
+    this.blobTransitionEnabled = false;
+    this.blobScrollTrigger?.disable();
   }
 
   openProject(project: Project): void {

@@ -3,6 +3,17 @@
   #sectionRef
   class="relative min-h-[85vh] w-full flex items-center justify-center py-10 md:py-12 px-4 md:px-6 lg:px-10"
 >
+  <!-- Mobile background blob -->
+  <div class="lg:hidden fixed inset-0 pointer-events-none z-[-1]">
+    <img
+      #mobileBlobRef
+      src="assets/3d_shape/01.webp"
+      width="900"
+      height="900"
+      alt="3D blob"
+      class="absolute w-[85vw] sm:w-[65vw] max-w-[900px] sm:max-w-[700px] opacity-0 rotate-90"
+    />
+  </div>
   <div
     class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,560px)_1fr] gap-8 items-center"
   >
@@ -10,7 +21,7 @@
     <div #formRef class="w-full opacity-0">
       <div
         id="contact-card"
-        class="max-w-[640px] w-full mx-auto bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200 dark:border-white/10 rounded-3xl p-5 md:p-6 lg:p-7 shadow-2xl"
+        class="relative z-10 max-w-[640px] w-full mx-auto bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200 dark:border-white/10 rounded-3xl p-5 md:p-6 lg:p-7 shadow-2xl"
       >
         <h2
           class="text-3xl md:text-4xl font-bold text-neutral-900 dark:text-white mb-2"
@@ -98,8 +109,5 @@
 
     <!-- Right placeholder for blob (desktop) -->
     <div class="hidden lg:block min-h-[420px]"></div>
-
-    <!-- Mobile spacer -->
-    <div class="lg:hidden block h-16"></div>
   </div>
 </section>
